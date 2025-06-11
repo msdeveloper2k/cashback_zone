@@ -1,0 +1,347 @@
+{% extends 'base.html' %}
+{% load url_filters %}
+
+{% block content %}
+<!-- Load Animate.css for animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+<!-- Load Font Awesome for social media icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Messages -->
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'info' %}bg-blue-100 text-blue-700{% else %}bg-yellow-100 text-yellow-700{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg p-6 sm:p-8 animate__animated animate__fadeIn">
+        <div class="flex flex-col sm:flex-row items-center gap-4">
+            {% if offer.logo %}
+                <img src="{{ offer.logo.url }}" alt="{{ offer.name }} Logo" class="w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-full shadow-lg">
+            {% else %}
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 flex items-center justify-center rounded-full shadow-lg">
+                    <span class="text-gray-500">No Logo</span>
+                </div>
+            {% endif %}
+            <div>
+                <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold {% if offer.theme == 'blue' %}text-blue-200{% elif offer.theme == 'red' %}text-red-200{% elif offer.theme == 'green' %}text-green-200{% elif offer.theme == 'purple' %}text-purple-200{% endif %}">
+                    {{ offer.name }}
+                </h1>
+                <p class="mt-2 text-sm sm:text-base">
+                    Status: 
+                    <span class="{% if offer.is_active == 'active' %}text-green-300{% else %}text-red-300{% endif %} font-semibold">
+                        {{ offer.is_active|title }}
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Section -->
+    <div class="bg-white rounded-b-lg shadow-lg p-6 sm:p-8">
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Images Section -->
+            <div class="lg:w-1/3 flex flex-col items-center gap-4">
+                <!-- Main Image -->
+                <div class="w-full group">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-2">Offer Image</h2>
+                    {% if offer.image %}
+                        <img src="{{ offer.image.url }}" alt="{{ offer.name }}" class="w-48 h-48 sm:w-56 sm:h-56 object-contain mx-auto rounded-lg shadow-md transform group-hover:scale-105 transition duration-300">
+                    {% else %}
+                        <div class="w-48 h-48 sm:w-56 sm:h-56 bg-gray-200 flex items-center justify-center mx-auto rounded-lg shadow-md">
+                            <span class="text-gray-500">No Image</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Details Section -->
+            <div class="lg:w-2/3">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 animate__animated animate__fadeInUp">Offer Details</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-gray-600"><strong>Price:</strong> ₹{{ offer.price }}</p>
+                        <p class="text-gray-600 mt-2"><strong>Theme:</strong> 
+                            <span class="{% if offer.theme == 'blue' %}text-blue-500{% elif offer.theme == 'red' %}text-red-500{% elif offer.theme == 'green' %}text-green-500{% elif offer.theme == 'purple' %}text-purple-500{% endif %} font-semibold">
+                                {{ offer.theme|title }}
+                            </span>
+                        </p>
+                        <p class="text-gray-600 mt-2"><strong>Created:</strong> {{ offer.created_at|date:"F d, Y, H:i" }}</p>
+                        <p class="text-gray-600 mt-2"><strong>Updated:</strong> {{ offer.updated_at|date:"F d, Y, H:i" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600"><strong>Description:</strong> {{ offer.description|default:"No description available." }}</p>
+                    </div>
+                </div>
+
+                <!-- Requirements Section -->
+                <div class="mt-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Requirements to Grab Offer</h3>
+                    <ul class="text-gray-600">
+                        {% if offer.requires_google_form and offer.google_form_url %}
+                            <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                                <strong>Required:</strong> Complete this <a href="{{ offer.google_form_url }}" target="_blank" class="underline hover:text-blue-600">Google Form</a> (Compulsory).
+                            </li>
+                        {% endif %}
+                        {% if offer.requires_contact_info %}
+                            <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                                <strong>Required:</strong> Provide your name, email, and mobile number below.
+                            </li>
+                        {% endif %}
+                        {% if not offer.requires_google_form and not offer.requires_contact_info %}
+                            <li class="text-gray-600">No additional requirements to grab this offer.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <!-- Contact Info Form (if required) -->
+                {% if offer.requires_contact_info %}
+                    <div class="mt-4">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Enter Your Details</h3>
+                        <form method="post" action="{% url 'grab_offer' offer_id=offer.id referral_id=offer_referral.id|default_if_none:'' %}" class="space-y-4">
+                            {% csrf_token %}
+                            <div>
+                                <label for="name" class="block text-gray-600">Name:</label>
+                                <input type="text" id="name" name="name" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-gray-600">Email:</label>
+                                <input type="email" id="email" name="email" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label for="mobile" class="block text-gray-600">Mobile Number:</label>
+                                <input type="tel" id="mobile" name="mobile" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <button type="submit" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 w-full">Submit & Grab Offer</button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                <!-- Action Buttons (only if contact info is not required) -->
+                    {% if not offer.requires_contact_info %}
+                        <div class="mt-6 flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+                            {% if offer_referral and not email_not_verified %}
+                                <a href="{% url 'grab_offer' offer_id=offer.id referral_id=offer_referral.id %}" target="_blank" class="inline-block bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 text-center animate__animated animate__pulse animate__infinite">Grab Now</a>
+                            {% else %}
+                                <a href="{% url 'grab_offer' offer_id=offer.id %}" target="_blank" class="inline-block bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 text-center animate__animated animate__pulse animate__infinite">Grab Now</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+            </div>
+        </div>
+
+        <!-- Tutorial Videos Section -->
+        {% if offer.tutorial_videos.all %}
+            <div class="mt-8 animate__animated animate__slideInUp">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Tutorial Videos</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for video in offer.tutorial_videos.all %}
+                        <div class="w-full">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">
+                                {{ video.title|default:"Tutorial Video" }}
+                            </h3>
+                            <p class="text-gray-600 mb-4">
+                                {{ video.description|default:"No description provided." }}
+                            </p>
+                            {% if 'youtube.com' in video.url or 'youtu.be' in video.url %}
+                                {% if 'youtu.be' in video.url %}
+                                    {% with video_id=video.url|slice:"17:" %}
+                                        <iframe class="w-full h-48 sm:h-56 lg:h-64 rounded-lg shadow-md" src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                    {% endwith %}
+                                {% else %}
+                                    {% with video_id=video.url|slice:"32:" %}
+                                        <iframe class="w-full h-48 sm:h-56 lg:h-64 rounded-lg shadow-md" src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                    {% endwith %}
+                                {% endif %}
+                            {% else %}
+                                <div class="w-full h-48 sm:h-56 lg:h-64 bg-gray-100 flex items-center justify-center rounded-lg shadow-md">
+                                    <a href="{{ video.url }}" target="_blank" class="text-blue-500 hover:underline text-center">Watch Video (External Link)</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Ad Banners Section -->
+        {% if offer.ad_banners.all %}
+            <div class="mt-8 animate__animated animate__slideInUp">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Ad Banners</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {% for banner in offer.ad_banners.all %}
+                        <div class="w-full group">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-2">
+                                {{ banner.title|default:"Ad Banner" }}
+                            </h3>
+                            <p class="text-gray-600 mb-4">
+                                {{ banner.description|default:"No description provided." }}
+                            </p>
+                            {% if banner.image %}
+                                <img src="{{ banner.image.url }}" alt="{{ banner.title|default:offer.name }} Ad" class="w-full h-auto rounded-lg shadow-md transform group-hover:scale-105 transition duration-300">
+                            {% else %}
+                                <div class="w-full h-auto bg-gray-200 flex items-center justify-center rounded-lg shadow-md">
+                                    <span class="text-gray-500">No Image Available</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- User Information Section -->
+    {% if user.is_authenticated %}
+        <div class="mt-8 bg-gradient-to-r from-gray-50 to-gray-100 p-6 rounded-lg shadow-md animate__animated animate__slideInUp">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Your Information</h2>
+                <button onclick="toggleUserInfo()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300 sm:hidden">
+                    <svg id="toggleIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="userInfoContent" class="hidden sm:block">
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Profile Information</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <p class="text-gray-600"><strong>Username:</strong> {{ profile_info.username }}</p>
+                        <p class="text-gray-600"><strong>Email:</strong> {{ profile_info.email }}</p>
+                        <p class="text-gray-600"><strong>Email Verified:</strong> 
+                            {% if user.userprofile.email_verified %}
+                                <span class="text-green-600">Yes</span>
+                            {% else %}
+                                <span class="text-red-600">No</span>
+                                <a href="{% url 'resend_verification_email' %}?offer_id={{ offer.id }}" class="text-blue-500 hover:underline ml-2">Resend Verification Email</a>
+                            {% endif %}
+                        </p>
+                        <p class="text-gray-600"><strong>Joined:</strong> {{ profile_info.joined|date:"F d, Y, H:i" }}</p>
+                        <p class="text-gray-600"><strong>Profile Level:</strong> {{ profile_level }}</p>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Your Referral Link</h3>
+                    {% if referral_url and not email_not_verified %}
+                        <p class="text-gray-600 break-all">
+                            <a href="{{ referral_url }}" target="_blank" class="text-blue-500 hover:underline">
+                                {{ referral_url }}
+                            </a>
+                        </p>
+                    {% else %}
+                        <p class="text-gray-600">Please verify your email to access your referral link.</p>
+                    {% endif %}
+                </div>
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Share This Offer</h3>
+                    <p class="text-gray-600 mb-4">Invite friends to join this offer and earn with us! 🚀 Share your referral link below:</p>
+                    <div class="flex flex-wrap gap-3 mb-4">
+                        {% if referral_url and not email_not_verified %}
+                            <a href="https://api.whatsapp.com/send?text=Join this offer and earn with us! 🚀 Use my referral link: {{ referral_url|urlencode }}" target="_blank" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300 flex items-center gap-2">
+                                <i class="fab fa-whatsapp"></i> WhatsApp
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?text=Join this offer and earn with us! 🚀 Use my referral link: {{ referral_url|urlencode }}" target="_blank" class="bg-blue-400 text-white px-4 py-2 rounded-lg hover:bg-blue-500 transition duration-300 flex items-center gap-2">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </a>
+                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ referral_url|urlencode }}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center gap-2">
+                                <i class="fab fa-facebook-f"></i> Facebook
+                            </a>
+                            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ referral_url|urlencode }}" target="_blank" class="bg-blue-800 text-white px-4 py-2 rounded-lg hover:bg-blue-900 transition duration-300 flex items-center gap-2">
+                                <i class="fab fa-linkedin-in"></i> LinkedIn
+                            </a>
+                            <a href="mailto:?subject=Join This Amazing Offer!&body=Join this offer and earn with us! 🚀 Use my referral link: {{ referral_url|urlencode }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-300 flex items-center gap-2">
+                                <i class="fas fa-envelope"></i> Email
+                            </a>
+                            <button onclick="copyReferralLink('{{ referral_url }}')" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition duration-300 flex items-center gap-2">
+                                <i class="fas fa-copy"></i> Copy Link
+                                <span id="copyFeedback" class="ml-2 hidden text-sm text-green-500">Link Copied!</span>
+                            </button>
+                        {% else %}
+                            <p class="text-gray-600">Please verify your email to share this offer.</p>
+                        {% endif %}
+                    </div>
+                    <p class="text-gray-600">
+                        <a href="{% url 'dashboard' %}" class="text-blue-500 hover:underline">Track your referrals on the Dashboard</a>
+                    </p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Your Referral for This Offer</h3>
+                    {% if offer_referral and not email_not_verified %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-3 text-left text-gray-700">Referral ID</th>
+                                        <th class="p-3 text-left text-gray-700">Status</th>
+                                        <th class="p-3 text-left text-gray-700">Created At</th>
+                                        <th class="p-3 text-left text-gray-700">Updated At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="p-3">{{ offer_referral.id }}</td>
+                                        <td class="p-3">{{ offer_referral.working_state|title }}</td>
+                                        <td class="p-3">{{ offer_referral.created_at|date:"F d, Y, H:i" }}</td>
+                                        <td class="p-3">{{ offer_referral.updated_at|date:"F d, Y, H:i" }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-gray-600">Please verify your email to view your referral details.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Referral Form -->
+    <div class="mt-8 bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-lg shadow-md animate__animated animate__bounceIn">
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Refer This Offer</h2>
+        {% if referral_message %}
+            <p class="text-gray-600 mb-4">{{ referral_message }}</p>
+        {% else %}
+            {% if email_not_verified %}
+                <p class="text-gray-600 mb-4">Please verify your email to refer this offer.</p>
+            {% else %}
+                <form method="post" action="{% url 'refer' offer_id=offer.id %}" class="space-y-4">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 w-full sm:w-auto">Refer Now</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Terms Section -->
+    {% if offer.terms %}
+        <div class="mt-8 bg-gray-50 p-6 rounded-lg shadow-md animate__animated animate__fadeIn">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Terms & Conditions</h2>
+            <p class="text-gray-600">{{ offer.terms }}</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript for Toggle and Copy Functionality -->
+<script>
+function toggleUserInfo() {
+    const userInfoContent = document.getElementById('userInfoContent');
+    const toggleIcon = document.getElementById('toggleIcon');
+    userInfoContent.classList.toggle('hidden');
+    toggleIcon.classList.toggle('rotate-180');
+}
+
+function copyReferralLink(link) {
+    navigator.clipboard.writeText(link).then(() => {
+        const feedback = document.getElementById('copyFeedback');
+        feedback.classList.remove('hidden');
+        setTimeout(() => feedback.classList.add('hidden'), 2000);
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% load static %}
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashback Zone - {% block title %}{% endblock %}</title>
+    {% tailwind_css %}
+
+    <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
+</head>
+<body class="bg-gray-100 font-sans">
+    <header class="bg-blue-600 text-white p-4">
+        <nav class="container mx-auto flex justify-between items-center">
+            <a href="{% url 'index' %}" class="text-2xl font-bold">Cashback Zone</a>
+            <div>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard' %}" class="text-white hover:underline mr-4">Dashboard</a>
+                    <a href="{% url 'account_logout' %}" class="text-white hover:underline">Logout</a>
+                {% else %}
+                    <a href="{% url 'account_login' %}" class="text-white hover:underline mr-4">Login</a>
+                    <a href="{% url 'account_signup' %}" class="text-white hover:underline">Register</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+    <footer class="bg-gray-800 text-white p-4 text-center mt-8">
+        <p>© 2025 Cashback Zone. All rights reserved.</p>
+    </footer>
+</body>
+</html>
+
+{% comment %} <footer class="bg-blue-700 text-white text-center p-6">
+        <p class="mb-4">Join Our Groups For More Offers and Exclusive Ways to Earn...</p>
+        <div class="flex justify-center space-x-4">
+            <a href="#" class="social-btn bg-blue-800 px-4 py-2 rounded-full">Facebook</a>
+            <a href="#" class="social-btn bg-pink-500 px-4 py-2 rounded-full">Instagram</a>
+            <a href="#" class="social-btn bg-blue-400 px-4 py-2 rounded-full">Telegram</a>
+            <a href="#" class="social-btn bg-green-500 px-4 py-2 rounded-full">WhatsApp</a>
+        </div>
+    </footer> {% endcomment %}

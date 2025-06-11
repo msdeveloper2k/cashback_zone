@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Profile Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg p-6 sm:p-8">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold">Welcome, {{ profile_info.username }}!</h1>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <p class="text-sm sm:text-base"><strong>Email:</strong> {{ profile_info.email }}</p>
+            <p class="text-sm sm:text-base"><strong>Joined:</strong> {{ profile_info.joined|date:"F d, Y, H:i" }}</p>
+            <p class="text-sm sm:text-base"><strong>Profile Level:</strong> {{ profile_level }}</p>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="bg-white rounded-b-lg shadow-lg p-6 sm:p-8">
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Filter Referrals</h2>
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+                <label for="offer" class="block text-gray-700">Offer Name</label>
+                <input type="text" name="offer" id="offer" value="{{ filter_offer }}" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="referral_id" class="block text-gray-700">Referral ID</label>
+                <input type="text" name="referral_id" id="referral_id" value="{{ filter_referral_id }}" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="date_start" class="block text-gray-700">Start Date</label>
+                <input type="datetime-local" name="date_start" id="date_start" value="{{ filter_date_start }}" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="date_end" class="block text-gray-700">End Date</label>
+                <input type="datetime-local" name="date_end" id="date_end" value="{{ filter_date_end }}" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="col-span-1 sm:col-span-2 lg:col-span-4 flex justify-center mt-4">
+                <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-300">Apply Filters</button>
+            </div>
+        </form>
+
+        html
+
+Collapse
+
+Wrap
+
+Copy
+<!-- Referrals Table -->
+<div class="mt-8">
+    <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Your Referrals</h2>
+    <div class="overflow-x-auto">
+        <table class="min-w-full border-collapse">
+            <thead>
+                <tr class="bg-gray-200">
+                    <th class="p-3 text-left text-gray-700">Referral ID</th>
+                    <th class="p-3 text-left text-gray-700">Offer Name</th>
+                    <th class="p-3 text-left text-gray-700">Status</th>
+                    <th class="p-3 text-left text-gray-700">Clicks</th>
+                    <th class="p-3 text-left text-gray-700">Created At</th>
+                    <th class="p-3 text-left text-gray-700">Updated At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for referral in referrals %}
+                    <tr class="border-b">
+                        <td class="p-3">{{ referral.id }}</td>
+                        <td class="p-3">{{ referral.offer.name }}</td>
+                        <td class="p-3">{{ referral.working_state|title }}</td>
+                        <td class="p-3">{{ referral.click_count }}</td>
+                        <td class="p-3">{{ referral.created_at|date:"F d, Y, H:i" }}</td>
+                        <td class="p-3">{{ referral.updated_at|date:"F d, Y, H:i" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="p-3 text-center text-gray-600">No referrals found.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+    <!-- Back to Home -->
+    <div class="mt-6 text-center">
+        <a href="{% url 'index' %}" class="text-blue-500 hover:underline text-lg">Back to Home</a>
+    </div>
+</div>
+{% endblock %}

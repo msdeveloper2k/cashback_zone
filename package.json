@@ -1,0 +1,19 @@
+{
+  "name": "cashback_zone",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "watch": "tailwindcss -i ./src/input.css -o ./css/output.css --watch",
+    "start": "tailwindcss -i ./src/input.css -o ./css/output.css"
+  },
+  "dependencies": {
+    "init": "^0.1.2"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.14"
+  }
+}
