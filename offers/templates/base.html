@@ -13,7 +13,7 @@
 <body class="bg-gray-100 font-sans">
     <header class="bg-blue-600 text-white p-4">
         <nav class="container mx-auto flex justify-between items-center">
-            <a href="{% url 'index' %}" class="text-2xl font-bold">Cashback Zone</a>
+            <a href="{% url 'home' %}" class="text-2xl font-bold">Cashback Zone</a>
             <div>
                 {% if user.is_authenticated %}
                     <a href="{% url 'dashboard' %}" class="text-white hover:underline mr-4">Dashboard</a>

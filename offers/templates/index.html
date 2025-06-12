@@ -1,33 +1,126 @@
 {% extends 'base.html' %}
-
-{% block title %}Home{% endblock %}
+{% load dict_filters %}
 
 {% block content %}
-<div class="container mx-auto p-4 sm:p-6 lg:p-8">
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-6">Welcome to Cashback Zone</h1>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for offer in offers %}
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                {% if offer.image %}
-                    <img src="{{ offer.image.url }}" alt="{{ offer.name }}" class="w-full h-48 object-contain">
-                {% else %}
-                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                        <span class="text-gray-500">No Image</span>
-                    </div>
-                {% endif %}
-                <div class="p-4">
-                    <h2 class="text-xl font-semibold text-gray-800">{{ offer.name }}</h2>
-                    <p class="text-gray-600 mt-2">{{ offer.description|default:"No description available." }}</p>
-                    <p class="text-gray-600 mt-2"><strong>Price:</strong> ₹{{ offer.price }}</p>
-                    <div class="mt-4 flex justify-between items-center">
-                        <a href="{% url 'offer_details' offer.id %}" class="text-blue-500 hover:underline">View Details</a>
-                        <a href="{% url 'refer' offer.id %}" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">Refer Now</a>
-                    </div>
-                </div>
+<!-- Load Tailwind CSS for responsive styling -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<!-- Load Animate.css for animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+<!-- Load Font Awesome for SVG icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<style>
+    .popup {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 90%;
+    }
+    .popup.success { background-color: #34D399; }
+    .popup.pending { background-color: #FBBF24; color: #1F2937; }
+    .popup.error { background-color: #F87171; }
+    .popup.other { background-color: #60A5FA; }
+    @media (max-width: 640px) {
+        .popup {
+            top: 10px;
+            right: 10px;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+    }
+</style>
+
+<div class="min-h-screen bg-gray-100">
+    <!-- Messages as Popups -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="popup animate__animated animate__fadeInDown 
+                {% if message.tags == 'success' %}success{% elif message.tags == 'info' %}pending{% elif message.tags == 'error' %}error{% else %}other{% endif %}" 
+                id="popup-{{ forloop.counter }}">
+                <span class="mr-2">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'info' %}
+                        <i class="fas fa-hourglass-half"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                </span>
+                {{ message }}
             </div>
-        {% empty %}
-            <p class="text-gray-600">No active offers available.</p>
         {% endfor %}
-    </div>
+    {% endif %}
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16 sm:py-20 animate__animated animate__fadeIn">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 flex justify-center items-center">
+                <i class="fas fa-star mr-3"></i> Earn Rewards with Referrals!
+            </h1>
+            <p class="text-lg sm:text-xl mb-8">
+                Join our platform, share referral links, and earn exciting rewards for every successful referral.
+            </p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="bg-white text-blue-600 px-8 py-3 rounded-full hover:bg-gray-200 transition duration-300 inline-flex items-center">
+                    <i class="fas fa-tachometer-alt mr-2"></i> Go to Dashboard
+                </a>
+            {% else %}
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="{% url 'account_signup' %}" class="bg-white text-blue-600 px-8 py-3 rounded-full hover:bg-gray-200 transition duration-300 inline-flex items-center">
+                        <i class="fas fa-user-plus mr-2"></i> Sign Up
+                    </a>
+                    <a href="{% url 'account_login' %}" class="bg-transparent border-2 border-white text-white px-8 py-3 rounded-full hover:bg-white hover:text-blue-600 transition duration-300 inline-flex items-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i> Log In
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Offers Section -->
+    <section class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <h2 class="text-2xl sm:text-3xl font-semibold text-gray-800 mb-8 text-center flex justify-center items-center animate__animated animate__fadeInUp">
+            <i class="fas fa-gift mr-3"></i> Explore Our Offers
+        </h2>
+        {% if offers %}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for offer in offers %}
+                    <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition duration-300 animate__animated animate__fadeInUp" style="animation-delay: {{ forloop.counter0|mul:0.2 }}s;">
+                        <h3 class="text-xl font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-tag mr-2 text-blue-500"></i> {{ offer.name }}
+                        </h3>
+                        <p class="text-gray-600 mb-4">Click to learn more and start referring!</p>
+                        <a href="{% url 'offer_detail' offer.id %}" class="bg-blue-500 text-white px-6 py-2 rounded-full hover:bg-blue-600 transition duration-300 inline-flex items-center">
+                            <i class="fas fa-info-circle mr-2"></i> View Details
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-600 text-center">No offers available at the moment. Check back soon!</p>
+        {% endif %}
+    </section>
 </div>
+
+<!-- JavaScript for Popup -->
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.popup').forEach((popup, index) => {
+        popup.style.display = 'block';
+        setTimeout(() => {
+            popup.classList.remove('animate__fadeInDown');
+            popup.classList.add('animate__fadeOutUp');
+        }, 3000 + index * 500);
+    });
+});
+</script>
 {% endblock %}

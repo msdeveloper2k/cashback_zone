@@ -1,87 +1,505 @@
 {% extends 'base.html' %}
+{% load dict_filters %}
 
 {% block content %}
+<!-- Load Tailwind CSS for responsive styling -->
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<!-- Load Animate.css for animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+<!-- Load Font Awesome for SVG icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+<style>
+    /* Custom styles for popups and modals */
+    .popup {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 500;
+        z-index: 1000;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        max-width: 90%;
+    }
+    .popup.success { background-color: #34D399; } /* Green for success */
+    .popup.pending { background-color: #FBBF24; color: #1F2937; } /* Yellow for pending */
+    .popup.error { background-color: #F87171; } /* Red for error */
+    .popup.other { background-color: #60A5FA; } /* Blue for other */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 500px;
+        position: relative;
+    }
+    .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        font-size: 24px;
+        cursor: pointer;
+        color: #4B5563;
+    }
+    @media (max-width: 640px) {
+        .popup {
+            top: 10px;
+            right: 10px;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+        .modal-content {
+            width: 95%;
+            padding: 15px;
+        }
+    }
+</style>
+
 <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-    <!-- Profile Section -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg p-6 sm:p-8">
-        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold">Welcome, {{ profile_info.username }}!</h1>
-        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <p class="text-sm sm:text-base"><strong>Email:</strong> {{ profile_info.email }}</p>
-            <p class="text-sm sm:text-base"><strong>Joined:</strong> {{ profile_info.joined|date:"F d, Y, H:i" }}</p>
-            <p class="text-sm sm:text-base"><strong>Profile Level:</strong> {{ profile_level }}</p>
+    <!-- Messages as Popups -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="popup animate__animated animate__fadeInDown 
+                {% if message.tags == 'success' %}success{% elif message.tags == 'info' %}pending{% elif message.tags == 'error' %}error{% else %}other{% endif %}" 
+                id="popup-{{ forloop.counter }}">
+                <span class="mr-2">
+                    {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elif message.tags == 'info' %}
+                        <i class="fas fa-hourglass-half"></i>
+                    {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle"></i>
+                    {% endif %}
+                </span>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- Header Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-t-lg p-6 sm:p-8 animate__animated animate__fadeIn">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold flex items-center">
+            <i class="fas fa-tachometer-alt mr-3"></i> Welcome, {{ profile_info.username }}!
+        </h1>
+        <p class="mt-2 text-sm sm:text-base">Here’s your dashboard to track referrals and manage your account.</p>
+    </div>
+
+    <!-- Main Section -->
+    <div class="bg-white rounded-b-lg shadow-lg p-6 sm:p-8">
+        <!-- User Information -->
+        <div class="mb-8 animate__animated animate__slideInUp">
+            <div class="flex justify-between items-center">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-user-circle mr-2"></i> Your Information
+                </h2>
+                <button onclick="toggleUserInfo()" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300 sm:hidden">
+                    <svg id="toggleIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="userInfoContent" class="hidden sm:block">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-user mr-2 text-blue-500"></i>
+                        <strong>Username:</strong> {{ profile_info.username }}
+                    </p>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-envelope mr-2 text-blue-500"></i>
+                        <strong>Email:</strong> {{ profile_info.email }}
+                    </p>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-check-circle mr-2 text-blue-500"></i>
+                        <strong>Email Verified:</strong> 
+                        {% if user.userprofile.email_verified %}
+                            <span class="text-green-600">Yes</span>
+                        {% else %}
+                            <span class="text-red-600">No</span>
+                            <a href="{% url 'resend_verification_email' %}" class="text-blue-500 hover:underline ml-2">Resend Verification Email</a>
+                        {% endif %}
+                    </p>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-mobile-alt mr-2 text-blue-500"></i>
+                        <strong>Mobile Verified:</strong> 
+                        {% if user.userprofile.mobile_verified %}
+                            <span class="text-green-600">Yes</span>
+                        {% else %}
+                            <span class="text-red-600">No</span>
+                            {% if pending_verification %}
+                                <span class="text-gray-600 ml-2">(Verification pending, you'll be notified when available)</span>
+                                <a href="{% url 'retry_mobile_verification' %}" class="text-blue-500 hover:underline ml-2">Retry Verification</a>
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
+                        <strong>Joined:</strong> {{ profile_info.joined|date:"F d, Y, H:i" }}
+                    </p>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-level-up-alt mr-2 text-blue-500"></i>
+                        <strong>Profile Level:</strong> {{ profile_level }}
+                    </p>
+                </div>
+                <!-- Button to Open Mobile Update Modal -->
+                <div class="mt-4">
+                    <button onclick="openModal()" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 flex items-center">
+                        <i class="fas fa-mobile-alt mr-2"></i> Update Mobile Number
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for Mobile Number Update -->
+        <div id="mobileModal" class="modal">
+            <div class="modal-content animate__animated animate__zoomIn">
+                <span class="close-btn" onclick="closeModal()">&times;</span>
+                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                    <i class="fas fa-mobile-alt mr-2 text-blue-500"></i> Update Mobile Number
+                </h3>
+                <form method="post" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label for="mobile_number" class="block text-gray-600 flex items-center">
+                            <i class="fas fa-phone mr-2"></i> Mobile Number:
+                        </label>
+                        {{ mobile_form.mobile_number }}
+                        {% if mobile_form.mobile_number.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ mobile_form.mobile_number.errors.as_text }}</p>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 w-full flex items-center justify-center">
+                        <i class="fas fa-save mr-2"></i> Update Mobile Number
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Admin Section (Visible Only to Admins) -->
+        {% if user.is_staff %}
+            <div class="mb-8 animate__animated animate__slideInUp">
+                <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-cogs mr-2"></i> Admin: API Status & Configuration
+                </h2>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- API Status -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-server mr-2 text-blue-500"></i> API Status
+                        </h3>
+                        <p class="text-gray-600 flex items-center">
+                            <i class="fas fa-plug mr-2"></i>
+                            <strong>NumVerify API:</strong> 
+                            {% if api_status.numverify.status == "active" %}
+                                <span class="text-green-600">Active</span>
+                            {% else %}
+                                <span class="text-red-600">Inactive</span>
+                            {% endif %}
+                            (Requests: {{ api_status.numverify.request_count }} / Limit: {{ api_status.numverify.limit }})
+                        </p>
+                        <p class="text-gray-600 flex items-center">
+                            <i class="fas fa-plug mr-2"></i>
+                            <strong>Abstract API:</strong> 
+                            {% if api_status.abstract.status == "active" %}
+                                <span class="text-green-600">Active</span>
+                            {% else %}
+                                <span class="text-red-600">Inactive</span>
+                            {% endif %}
+                            (Requests: {{ api_status.abstract.request_count }} / Limit: {{ api_status.abstract.limit }})
+                        </p>
+                    </div>
+                    <!-- API Configuration -->
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
+                            <i class="fas fa-cog mr-2 text-blue-500"></i> API Configuration
+                        </h3>
+                        <p class="text-gray-600 flex items-center">
+                            <i class="fas fa-key mr-2"></i>
+                            <strong>NumVerify API Key:</strong> {{ api_config.numverify_key|slice:":4" }}... (Masked)
+                        </p>
+                        <p class="text-gray-600 flex items-center">
+                            <i class="fas fa-key mr-2"></i>
+                            <strong>Abstract API Key:</strong> {{ api_config.abstract_key|slice:":4" }}... (Masked)
+                        </p>
+                        <p class="text-gray-600 flex items-center">
+                            <i class="fas fa-tachometer-alt mr-2"></i>
+                            <strong>Daily Request Limit:</strong> {{ api_config.request_limit }}
+                        </p>
+                    </div>
+                </div>
+                <!-- Cache Statistics -->
+                <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-database mr-2 text-blue-500"></i> Cache Statistics
+                    </h3>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-archive mr-2"></i>
+                        <strong>Total Cached Numbers:</strong> {{ cache_stats.total_cached }}
+                    </p>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-bullseye mr-2"></i>
+                        <strong>Cache Hits:</strong> {{ cache_stats.cache_hits }}
+                    </p>
+                    <p class="text-gray-600 flex items-center">
+                        <i class="fas fa-percentage mr-2"></i>
+                        <strong>Cache Hit Rate:</strong> {{ cache_stats.hit_rate }}%
+                    </p>
+                </div>
+                <!-- API Logs -->
+                <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
+                        <i class="fas fa-file-alt mr-2 text-blue-500"></i> Recent API Logs
+                    </h3>
+                    {% if api_logs %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="p-3 text-left text-gray-700">Timestamp</th>
+                                        <th class="p-3 text-left text-gray-700">API</th>
+                                        <th class="p-3 text-left text-gray-700">Message</th>
+                                        <th class="p-3 text-left text-gray-700">Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for log in api_logs %}
+                                        <tr class="border-b">
+                                            <td class="p-3">{{ log.timestamp|date:"F d, Y, H:i:s" }}</td>
+                                            <td class="p-3">{{ log.api_name }}</td>
+                                            <td class="p-3">{{ log.message }}</td>
+                                            <td class="p-3">
+                                                {% if log.level == "INFO" %}
+                                                    <span class="text-green-600">{{ log.level }}</span>
+                                                {% elif log.level == "WARNING" %}
+                                                    <span class="text-yellow-600">{{ log.level }}</span>
+                                                {% else %}
+                                                    <span class="text-red-600">{{ log.level }}</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-gray-600">No recent API logs available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Contact Info Entries -->
+        <div class="mb-8 animate__animated animate__slideInUp">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-address-book mr-2"></i> Your Contact Info Submissions
+            </h2>
+            {% if contact_infos %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-3 text-left text-gray-700">Offer</th>
+                                <th class="p-3 text-left text-gray-700">Name</th>
+                                <th class="p-3 text-left text-gray-700">Email</th>
+                                <th class="p-3 text-left text-gray-700">Mobile</th>
+                                <th class="p-3 text-left text-gray-700">Referral ID</th>
+                                <th class="p-3 text-left text-gray-700">Submitted At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contact in contact_infos %}
+                                <tr class="border-b">
+                                    <td class="p-3">{{ contact.offer.name }}</td>
+                                    <td class="p-3">{{ contact.name }}</td>
+                                    <td class="p-3">{{ contact.email }}</td>
+                                    <td class="p-3">{{ contact.mobile }}</td>
+                                    <td class="p-3">
+                                        {% if contact.referral %}
+                                            {{ contact.referral.id }}
+                                        {% else %}
+                                            None
+                                        {% endif %}
+                                    </td>
+                                    <td class="p-3">{{ contact.created_at|date:"F d, Y, H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-gray-600">You have not submitted any contact info for offers yet.</p>
+            {% endif %}
+        </div>
+
+        <!-- Referral Statistics -->
+        <div class="mb-8 animate__animated animate__slideInUp">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-chart-bar mr-2"></i> Referral Statistics
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-blue-100 p-4 rounded-lg text-center">
+                    <p class="text-gray-600 font-semibold flex items-center justify-center">
+                        <i class="fas fa-users mr-2"></i> Total Referrals
+                    </p>
+                    <p class="text-2xl font-bold text-blue-600">{{ total_referrals }}</p>
+                </div>
+                <div class="bg-green-100 p-4 rounded-lg text-center">
+                    <p class="text-gray-600 font-semibold flex items-center justify-center">
+                        <i class="fas fa-mouse-pointer mr-2"></i> Clicked Referrals
+                    </p>
+                    <p class="text-2xl font-bold text-green-600">{{ clicked_referrals }}</p>
+                </div>
+                <div class="bg-purple-100 p-4 rounded-lg text-center">
+                    <p class="text-gray-600 font-semibold flex items-center justify-center">
+                        <i class="fas fa-trophy mr-2"></i> Converted Referrals
+                    </p>
+                    <p class="text-2xl font-bold text-purple-600">{{ converted_referrals }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Referral Links -->
+        <div class="mb-8 animate__animated animate__slideInUp">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-link mr-2"></i> Your Referral Links
+            </h2>
+            {% if referral_urls and not email_not_verified %}
+                <div class="space-y-4">
+                    {% for referral in referrals %}
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                            <p class="text-gray-600">
+                                <strong>Offer:</strong> {{ referral.offer.name }}<br>
+                                <a href="{{ referral_urls|get_item:referral.offer.id }}" target="_blank" class="text-blue-500 hover:underline break-all">
+                                    {{ referral_urls|get_item:referral.offer.id }}
+                                </a>
+                            </p>
+                            <div class="flex flex-wrap gap-3">
+                                <a href="https://api.whatsapp.com/send?text=Join and earn with us! 🚀 Use my referral link: {{ referral_urls|get_item:referral.offer.id|urlencode }}" target="_blank" class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition duration-300 flex items-center gap-2">
+                                    <i class="fab fa-whatsapp"></i> WhatsApp
+                                </a>
+                                <a href="https://twitter.com/intent/tweet?text=Join and earn with us! 🚀 Use my referral link: {{ referral_urls|get_item:referral.offer.id|urlencode }}" target="_blank" class="bg-blue-400 text-white px-4 py-2 rounded-lg hover:bg-blue-500 transition duration-300 flex items-center gap-2">
+                                    <i class="fab fa-twitter"></i> Twitter
+                                </a>
+                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ referral_urls|get_item:referral.offer.id|urlencode }}" target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center gap-2">
+                                    <i class="fab fa-facebook-f"></i> Facebook
+                                </a>
+                                <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ referral_urls|get_item:referral.offer.id|urlencode }}" target="_blank" class="bg-blue-800 text-white px-4 py-2 rounded-lg hover:bg-blue-900 transition duration-300 flex items-center gap-2">
+                                    <i class="fab fa-linkedin-in"></i> LinkedIn
+                                </a>
+                                <a href="mailto:?subject=Join and Earn!&body=Join and earn with us! 🚀 Use my referral link: {{ referral_urls|get_item:referral.offer.id|urlencode }}" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-300 flex items-center gap-2">
+                                    <i class="fas fa-envelope"></i> Email
+                                </a>
+                                <button onclick="copyReferralLink('{{ referral_urls|get_item:referral.offer.id }}', '{{ referral.offer.id }}')" class="bg-purple-500 text-white px-4 py-2 rounded-lg hover:bg-purple-600 transition duration-300 flex items-center gap-2">
+                                    <i class="fas fa-copy"></i> Copy Link
+                                    <span id="copyFeedback-{{ referral.offer.id }}" class="ml-2 hidden text-sm text-green-500">Link Copied!</span>
+                                </button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-gray-600">Please verify your email to access your referral links.</p>
+            {% endif %}
+        </div>
+
+        <!-- Referral History -->
+        <div class="animate__animated animate__slideInUp">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-history mr-2"></i> Your Referral History
+            </h2>
+            {% if referrals %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-200">
+                                <th class="p-3 text-left text-gray-700">Referral ID</th>
+                                <th class="p-3 text-left text-gray-700">Offer</th>
+                                <th class="p-3 text-left text-gray-700">Status</th>
+                                <th class="p-3 text-left text-gray-700">Clicks</th>
+                                <th class="p-3 text-left text-gray-700">Created At</th>
+                                <th class="p-3 text-left text-gray-700">Updated At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for referral in referrals %}
+                                <tr class="border-b">
+                                    <td class="p-3">{{ referral.id }}</td>
+                                    <td class="p-3">{{ referral.offer.name }}</td>
+                                    <td class="p-3">{{ referral.working_state|title }}</td>
+                                    <td class="p-3">{{ referral.click_count }}</td>
+                                    <td class="p-3">{{ referral.created_at|date:"F d, Y, H:i" }}</td>
+                                    <td class="p-3">{{ referral.updated_at|date:"F d, Y, H:i" }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-gray-600">You have no referrals yet. Start sharing your referral links!</p>
+            {% endif %}
         </div>
     </div>
-
-    <!-- Filter Section -->
-    <div class="bg-white rounded-b-lg shadow-lg p-6 sm:p-8">
-        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Filter Referrals</h2>
-        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-                <label for="offer" class="block text-gray-700">Offer Name</label>
-                <input type="text" name="offer" id="offer" value="{{ filter_offer }}" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label for="referral_id" class="block text-gray-700">Referral ID</label>
-                <input type="text" name="referral_id" id="referral_id" value="{{ filter_referral_id }}" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label for="date_start" class="block text-gray-700">Start Date</label>
-                <input type="datetime-local" name="date_start" id="date_start" value="{{ filter_date_start }}" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <label for="date_end" class="block text-gray-700">End Date</label>
-                <input type="datetime-local" name="date_end" id="date_end" value="{{ filter_date_end }}" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div class="col-span-1 sm:col-span-2 lg:col-span-4 flex justify-center mt-4">
-                <button type="submit" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-300">Apply Filters</button>
-            </div>
-        </form>
-
-        html
-
-Collapse
-
-Wrap
-
-Copy
-<!-- Referrals Table -->
-<div class="mt-8">
-    <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Your Referrals</h2>
-    <div class="overflow-x-auto">
-        <table class="min-w-full border-collapse">
-            <thead>
-                <tr class="bg-gray-200">
-                    <th class="p-3 text-left text-gray-700">Referral ID</th>
-                    <th class="p-3 text-left text-gray-700">Offer Name</th>
-                    <th class="p-3 text-left text-gray-700">Status</th>
-                    <th class="p-3 text-left text-gray-700">Clicks</th>
-                    <th class="p-3 text-left text-gray-700">Created At</th>
-                    <th class="p-3 text-left text-gray-700">Updated At</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for referral in referrals %}
-                    <tr class="border-b">
-                        <td class="p-3">{{ referral.id }}</td>
-                        <td class="p-3">{{ referral.offer.name }}</td>
-                        <td class="p-3">{{ referral.working_state|title }}</td>
-                        <td class="p-3">{{ referral.click_count }}</td>
-                        <td class="p-3">{{ referral.created_at|date:"F d, Y, H:i" }}</td>
-                        <td class="p-3">{{ referral.updated_at|date:"F d, Y, H:i" }}</td>
-                    </tr>
-                {% empty %}
-                    <tr>
-                        <td colspan="6" class="p-3 text-center text-gray-600">No referrals found.</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
 </div>
 
-    <!-- Back to Home -->
-    <div class="mt-6 text-center">
-        <a href="{% url 'index' %}" class="text-blue-500 hover:underline text-lg">Back to Home</a>
-    </div>
-</div>
+<!-- JavaScript for Toggle, Modal, Popup, and Copy Functionality -->
+<script>
+function toggleUserInfo() {
+    const userInfoContent = document.getElementById('userInfoContent');
+    const toggleIcon = document.getElementById('toggleIcon');
+    userInfoContent.classList.toggle('hidden');
+    toggleIcon.classList.toggle('rotate-180');
+}
+
+function openModal() {
+    const modal = document.getElementById('mobileModal');
+    modal.style.display = 'flex';
+}
+
+function closeModal() {
+    const modal = document.getElementById('mobileModal');
+    modal.style.display = 'none';
+}
+
+// Handle popup display and auto-hide
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.popup').forEach((popup, index) => {
+        popup.style.display = 'block';
+        setTimeout(() => {
+            popup.classList.remove('animate__fadeInDown');
+            popup.classList.add('animate__fadeOutUp');
+        }, 3000 + index * 500); // Staggered display for multiple popups
+    });
+});
+
+function copyReferralLink(link, offerId) {
+    navigator.clipboard.writeText(link).then(() => {
+        const feedback = document.getElementById('copyFeedback-' + offerId);
+        feedback.classList.remove('hidden');
+        setTimeout(() => feedback.classList.add('hidden'), 2000);
+    });
+}
+
+// Close modal when clicking outside
+document.getElementById('mobileModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('mobileModal')) {
+        closeModal();
+    }
+});
+</script>
 {% endblock %}

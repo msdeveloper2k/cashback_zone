@@ -35,7 +35,7 @@ INSTALLED_APPS = [
     'tailwind',           
     'django_browser_reload',
     'offers',
-    'theme',
+    'theme',    
 ]
 
 MIDDLEWARE = [
@@ -48,7 +48,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
     'django_browser_reload.middleware.BrowserReloadMiddleware',
-]
+]    
 
 TAILWIND_APP_NAME = 'theme'
 
@@ -59,26 +59,28 @@ TAILWIND_APP_NAME = 'theme'
 
 ROOT_URLCONF = 'cashback_zone.urls'
 
+
 TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
+       {
+           'BACKEND': 'django.template.backends.django.DjangoTemplates',
+           'DIRS': [
             BASE_DIR / 'templates',
             BASE_DIR / 'offers' / 'templates',
             BASE_DIR / 'theme' / 'templates',
             # Removed 'dashboard/templates' since there's no dashboard app
-        ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',                
             ],
-        },
-    },
-]
+           'APP_DIRS': True,
+           'OPTIONS': {
+               'context_processors': [
+                   'django.template.context_processors.debug',
+                   'django.template.context_processors.request',
+                   'django.contrib.auth.context_processors.auth',
+                   'django.contrib.messages.context_processors.messages',
+               ],
+           },
+       },
+   ]
+
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -88,6 +90,12 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'coolcents2k25@gmail.com'
 EMAIL_HOST_PASSWORD = 'uqnb tkkp sobe xwqc'
 DEFAULT_FROM_EMAIL = 'coolcents2k25@gmail.com'
+
+
+# Other settings (ensure these are present for email and session functionality)
+DEFAULT_FROM_EMAIL = 'coolcents2k25@gmail.com'  # Replace with your email
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+TIME_ZONE = 'Asia/Kolkata'
 
 DATABASES = {
     'default': {
@@ -111,6 +119,14 @@ ACCOUNT_SIGNUP_REDIRECT_URL = '/'  # Changed to redirect to homepage after signu
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
+NUMVERIFY_API_KEY = 'a530364b433775e47da0ea0c160adfc7' # https://numverify.com/documentation#test-credentials
+ABSTRACT_API_KEY = 'ac32223c63ff43d697d3596aca424045'  # https://app.abstractapi.com/api/phone-validation/tester
+
+
+# Free tier limits
+NUMVERIFY_FREE_LIMIT = 250  # 250 requests/month
+ABSTRACT_FREE_LIMIT = 250  # 250 requests/month
+
 # Google OAuth settings (replace with your actual credentials)
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
@@ -127,6 +143,25 @@ SOCIALACCOUNT_PROVIDERS = {
             'access_type': 'online',
         }
     }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'click_logs.log',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+    },
 }
 
 # Static files settings
