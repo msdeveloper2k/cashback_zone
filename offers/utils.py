@@ -1,8 +1,11 @@
 import logging
+from pyexpat.errors import messages
+from django.shortcuts import redirect
 import requests
 import random
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from .models import ApiUsage, ApiLog, MobileValidationCache, PendingVerification
 
 logger = logging.getLogger(__name__)
@@ -22,6 +25,32 @@ def send_email_verification_code(user, email, code):
     except Exception as e:
         logger.error(f"Failed to send email verification code to {email}: {str(e)}")
         return False
+    
+@login_required
+def resend_verification_email(request):
+    user = request.user
+    user_profile = user.userprofile
+    offer_id = request.GET.get('offer_id')
+
+    if not user.email:
+        messages.error(request, "No email address is associated with your account.")
+        if offer_id:
+            return redirect('offer_detail', offer_id=offer_id)
+        return redirect('dashboard')
+
+    if user_profile.email_verified:
+        messages.info(request, "Your email is already verified.")
+    else:
+        try:
+            send_verification_email(user, request)  # This should now call the utility function from utils.py
+            messages.success(request, "A new verification email has been sent.")
+        except Exception as e:
+            logger.error(f"Failed to resend verification email to {user.email}: {str(e)}")
+            messages.error(request, "Failed to send verification email. Please try again later.")
+
+    if offer_id:
+        return redirect('offer_detail', offer_id=offer_id)
+    return redirect('dashboard')
 
 def validate_mobile_number(user, mobile_number):
     username = user.username if user else "anonymous"

@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from email import utils
 from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -10,7 +11,6 @@ from .models import AdBanner, ApiLog, ApiUsage, Offer, Referral, ReferralClick, 
 from django.utils.dateparse import parse_datetime
 import json
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
-from .utils import send_verification_email
 from allauth.account.models import EmailAddress
 from allauth.account.views import EmailView
 from .forms import ContactInfoForm, CustomSignupForm, UpdateMobileForm
@@ -308,10 +308,10 @@ def offer_detail(request, offer_id, referral_id=None):
             messages.error(request, "Please correct the errors below.")
     else:
         # Fetch mobile from ContactInfo instead of UserProfile
-        mobile = '+12025550123'
+        mobile = '+911234567890'  # Default mobile number
         if request.user.is_authenticated and request.user.userprofile.mobile_verified:
             contact_info = request.user.contactinfo_set.first()
-            mobile = contact_info.mobile if contact_info else '+12025550123'
+            mobile = contact_info.mobile if contact_info else '+911234567890'
 
         form = ContactInfoForm(initial={
             'email': request.user.email if request.user.is_authenticated else '',
@@ -706,8 +706,9 @@ def verify_email(request, uidb64, token):
 
 @login_required
 def resend_verification_email(request):
+    from .utils import send_verification_email
     user = request.user
-    user_profile = user.userprofile
+    user_profile = user.userprofile    
     if user_profile.email_verified:
         messages.info(request, "Your email is already verified.")
     else:
@@ -715,6 +716,7 @@ def resend_verification_email(request):
             send_verification_email(user, request)
             messages.success(request, "A new verification email has been sent.")
         except Exception as e:
+            print(f"Error sending verification email: {str(e)}")
             logger.error(f"Failed to resend verification email to {user.email}: {str(e)}")
             messages.error(request, "Failed to send verification email. Please try again later.")
     return redirect('dashboard')
@@ -739,6 +741,8 @@ def send_verification_email(request):
         }
         request.session.modified = True  # Ensure the session is saved
 
+        logger.info(f"Sending verification code {verification_code} to {email}")
+
         try:
             # Send the email
             send_mail(
@@ -748,15 +752,18 @@ def send_verification_email(request):
                 recipient_list=[email],
                 fail_silently=False,
             )
+            logger.info(f"Successfully sent verification code to {email}")
             return JsonResponse({"status": "success", "message": "Verification code sent to your email."})
         except Exception as e:
+            logger.error(f"Failed to send email to {email}: {str(e)}")
             return JsonResponse({"status": "error", "message": f"Failed to send email: {str(e)}"}, status=500)
     return JsonResponse({"status": "error", "message": "Invalid request."}, status=400)
 
 def verify_email_code(request):
     if request.method == "POST":
         code = request.POST.get("code")
-        email = request.POST.get("email")  # Now pass the email from the frontend
+        email = request.POST.get("email")
+        is_signup = request.POST.get("is_signup") == "true"  # Check if this is the signup flow
 
         if not email or not code:
             return JsonResponse({"status": "error", "message": "Email and code are required."}, status=400)
@@ -766,34 +773,45 @@ def verify_email_code(request):
         stored_data = verification_codes.get(email)
 
         if not stored_data:
+            logger.warning(f"No verification code found for email {email}")
             return JsonResponse({"status": "error", "message": "No verification code found for this email."}, status=400)
 
         stored_code = stored_data['code']
         timestamp = stored_data['timestamp']
         current_time = int(time.time())
 
+        logger.info(f"Verifying code {code} for {email}, stored code: {stored_code}")
+
         # Check if the code has expired (e.g., 10 minutes = 600 seconds)
         if current_time - timestamp > 600:
             del verification_codes[email]
             request.session['verification_codes'] = verification_codes
             request.session.modified = True
+            logger.warning(f"Verification code expired for {email}")
             return JsonResponse({"status": "error", "message": "Verification code has expired."}, status=400)
 
         if code == stored_code:
-            try:
-                # Mark email as verified
-                user = User.objects.get(email=email)
-                user.userprofile.email_verified = True
-                user.userprofile.save()
+            # Remove the code from the session
+            del verification_codes[email]
+            request.session['verification_codes'] = verification_codes
+            request.session.modified = True
 
-                # Remove the code from the session
-                del verification_codes[email]
-                request.session['verification_codes'] = verification_codes
-                request.session.modified = True
-
+            if is_signup:
+                # For signup, just confirm the code is valid; user creation happens later
+                logger.info(f"Email {email} verification successful for signup")
                 return JsonResponse({"status": "success", "message": "Email verified successfully!"})
-            except User.DoesNotExist:
-                return JsonResponse({"status": "error", "message": "User with this email does not exist."}, status=400)
+            else:
+                # For other flows (e.g., offer_detail.html), update the user's email_verified status
+                try:
+                    user = User.objects.get(email=email)
+                    user.userprofile.email_verified = True
+                    user.userprofile.save()
+                    logger.info(f"Email {email} verified successfully for existing user")
+                    return JsonResponse({"status": "success", "message": "Email verified successfully!"})
+                except User.DoesNotExist:
+                    logger.error(f"User with email {email} does not exist")
+                    return JsonResponse({"status": "error", "message": "User with this email does not exist."}, status=400)
+        logger.warning(f"Invalid code {code} for {email}, expected {stored_code}")
         return JsonResponse({"status": "error", "message": "Invalid verification code."}, status=400)
     return JsonResponse({"status": "error", "message": "Invalid request."}, status=400)
 

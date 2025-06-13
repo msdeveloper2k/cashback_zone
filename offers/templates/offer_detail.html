@@ -814,8 +814,8 @@
                                 <i class="fas fa-shield-alt mr-2"></i> Select the correct image:
                             </label>
                             <p class="text-gray-600 mb-2">
-                                {% with target=captcha.description|slice:"18:-1" %}
-                                    Select the image of a <strong>{{ target }}</strong>
+                                {% with target=captcha.description %}
+                                    Select the image of a {{ target|slice:"22:" }}:
                                 {% endwith %}
                             </p>
                             <div class="captcha-grid grid grid-cols-3 gap-2" id="captchaImages">
@@ -967,18 +967,23 @@ function shuffleArray(array) {
 
 // Email Verification Logic
 let isEmailVerified = false;
-const VERIFICATION_CODE = "123456"; // Simulated verification code
-
-let isSendingCode = false; // Flag to prevent multiple requests
-let lastSentTime = 0; // Track the last time a code was sent
-const COOLDOWN_SECONDS = 30; // 30-second cooldown between requests
+let isSendingCode = false;
+let lastSentTime = 0;
+const COOLDOWN_SECONDS = 30;
 
 function sendVerificationCode(formType) {
-    const emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'email' : 'lead_email'));
-    const email = emailInput.value;
+    const emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'id_email' : 'lead_email'));
+    const email = emailInput ? emailInput.value : '';
     const verificationSection = document.getElementById(formType === 'signup' ? 'verificationSection' : `verificationSection-${formType}`);
     const verificationStatus = document.getElementById(formType === 'signup' ? 'verificationStatus' : `verificationStatus-${formType}`);
     const verifyEmailBtn = document.getElementById(formType === 'signup' ? 'verifyEmailBtn' : `verifyEmailBtn${formType.charAt(0).toUpperCase() + formType.slice(1)}`);
+
+    if (!emailInput) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "Email input field not found.";
+        return;
+    }
 
     if (!email) {
         verificationStatus.classList.remove('text-green-500');
@@ -987,7 +992,7 @@ function sendVerificationCode(formType) {
         return;
     }
 
-    const currentTime = Date.now() / 1000; // Current time in seconds
+    const currentTime = Date.now() / 1000;
     if (isSendingCode || (currentTime - lastSentTime < COOLDOWN_SECONDS)) {
         verificationStatus.classList.remove('text-green-500');
         verificationStatus.classList.add('text-red-500');
@@ -1034,12 +1039,25 @@ function sendVerificationCode(formType) {
 }
 
 function verifyCode(formType) {
-    const verificationInput = document.getElementById(formType === 'signup' ? 'verificationCode' : `verificationCode-${formType}`);
-    const verificationStatus = document.getElementById(formType === 'signup' ? 'verificationStatus' : `verificationStatus-${formType}`);
-    const submitBtn = document.getElementById(formType === 'signup' ? 'submitBtn' : `submitBtn-${formType}`);
-    const emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'email' : 'lead_email'));
-    const code = verificationInput.value;
-    const email = emailInput.value;
+    let verificationInput, verificationStatus, submitBtn, emailInput, code, email;
+
+    try {
+        verificationInput = document.getElementById(formType === 'signup' ? 'verificationCode' : `verificationCode-${formType}`);
+        verificationStatus = document.getElementById(formType === 'signup' ? 'verificationStatus' : `verificationStatus-${formType}`);
+        submitBtn = document.getElementById(formType === 'signup' ? 'submitBtn' : `submitBtn-${formType}`);
+        emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'id_email' : 'lead_email'));
+        code = verificationInput.value;
+        email = emailInput ? emailInput.value : '';
+    } catch (error) {
+        console.error("Error accessing DOM elements in verifyCode:", error);
+        const statusElement = document.getElementById(`verificationStatus-${formType}`);
+        if (statusElement) {
+            statusElement.classList.remove('text-green-500');
+            statusElement.classList.add('text-red-500');
+            statusElement.textContent = "An error occurred while accessing the form.";
+        }
+        return;
+    }
 
     if (!code) {
         verificationStatus.classList.remove('text-green-500');
@@ -1055,14 +1073,13 @@ function verifyCode(formType) {
         return;
     }
 
-    // Send AJAX request to verify the code
     fetch("{% url 'verify_email_code' %}", {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
             "X-CSRFToken": "{{ csrf_token }}",
         },
-        body: `code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`
+        body: `code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}&is_signup=${formType === 'signup'}`
     })
     .then(response => response.json())
     .then(data => {

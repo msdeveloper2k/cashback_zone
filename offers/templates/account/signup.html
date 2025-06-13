@@ -51,9 +51,10 @@
 </div>
 
 <script>
-let isSendingCode = false; // Flag to prevent multiple requests
-let lastSentTime = 0; // Track the last time a code was sent
-const COOLDOWN_SECONDS = 30; // 30-second cooldown between requests
+let isEmailVerified = false;
+let isSendingCode = false;
+let lastSentTime = 0;
+const COOLDOWN_SECONDS = 30;
 
 function sendVerificationCode(formType) {
     const emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'email' : 'lead_email'));
@@ -69,7 +70,7 @@ function sendVerificationCode(formType) {
         return;
     }
 
-    const currentTime = Date.now() / 1000; // Current time in seconds
+    const currentTime = Date.now() / 1000;
     if (isSendingCode || (currentTime - lastSentTime < COOLDOWN_SECONDS)) {
         verificationStatus.classList.remove('text-green-500');
         verificationStatus.classList.add('text-red-500');
@@ -137,14 +138,14 @@ function verifyCode(formType) {
         return;
     }
 
-    // Send AJAX request to verify the code
+    // Send AJAX request to verify the code, indicating if this is signup
     fetch("{% url 'verify_email_code' %}", {
         method: "POST",
         headers: {
             "Content-Type": "application/x-www-form-urlencoded",
             "X-CSRFToken": "{{ csrf_token }}",
         },
-        body: `code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`
+        body: `code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}&is_signup=${formType === 'signup'}`
     })
     .then(response => response.json())
     .then(data => {

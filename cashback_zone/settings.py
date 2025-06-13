@@ -35,8 +35,9 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',    
     'tailwind',           
     'django_browser_reload',
-    'offers',
-    'theme',    
+    # 'offers',
+    'theme',
+    'offers.apps.OffersConfig',  # Ensure OffersConfig is registered
 ]
 
 MIDDLEWARE = [
@@ -85,10 +86,11 @@ TEMPLATES = [
 # Session configuration
 SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use database-backed sessions
 SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
-SESSION_COOKIE_SECURE = True  # Use True in production with HTTPS
+SESSION_COOKIE_SECURE = False  # Use True in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = 'Lax'
 SESSION_SAVE_EVERY_REQUEST = True  # Save the session on every request
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
