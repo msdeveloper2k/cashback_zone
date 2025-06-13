@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Advertiser, ApiLog, MobileValidationCache, Offer, AdBanner, PendingVerification, TutorialVideo, Referral, UserProfile, ContactInfo, GoogleFormSubmission
+from django.utils.html import format_html
+from .models import Advertiser, ApiLog, ApiUsage, MobileValidationCache, Offer, AdBanner, PendingVerification, TutorialVideo, Referral, ReferralClick, UserProfile, ContactInfo, GoogleFormSubmission, ConversionProof
 
 # Inline for AdBanner to be displayed in Offer admin
 class AdBannerInline(admin.TabularInline):
@@ -31,6 +32,14 @@ class GoogleFormSubmissionInline(admin.TabularInline):
     readonly_fields = ('user', 'visitor_identifier', 'submitted', 'created_at')
     can_delete = False
 
+# Inline for ConversionProof to be displayed in Offer admin
+class ConversionProofInline(admin.TabularInline):
+    model = ConversionProof
+    extra = 0
+    fields = ('user', 'status', 'image', 'submitted_at')
+    readonly_fields = ('user', 'status', 'image', 'submitted_at')
+    can_delete = False
+
 @admin.register(Advertiser)
 class AdvertiserAdmin(admin.ModelAdmin):
     list_display = ('name', 'base_url', 'query_param_prefix', 'created_at', 'updated_at')
@@ -41,12 +50,12 @@ class AdvertiserAdmin(admin.ModelAdmin):
 
 @admin.register(Offer)
 class OfferAdmin(admin.ModelAdmin):
-    list_display = ('name', 'advertiser', 'price', 'is_active', 'requires_contact_info', 'created_at', 'updated_at')
-    list_filter = ('is_active', 'theme', 'requires_google_form', 'requires_contact_info', 'created_at', 'updated_at')
+    list_display = ('name', 'advertiser', 'price', 'is_active', 'requires_contact_info', 'requires_conversion_proof', 'created_at', 'updated_at')
+    list_filter = ('is_active', 'theme', 'requires_google_form', 'requires_contact_info', 'requires_conversion_proof', 'created_at', 'updated_at')
     search_fields = ('name', 'description', 'advertiser__name')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
-    inlines = [AdBannerInline, TutorialVideoInline, ContactInfoInline, GoogleFormSubmissionInline]
+    inlines = [AdBannerInline, TutorialVideoInline, ContactInfoInline, GoogleFormSubmissionInline, ConversionProofInline]
     fieldsets = (
         (None, {
             'fields': ('name', 'advertiser', 'price', 'image', 'logo', 'link')
@@ -55,16 +64,22 @@ class OfferAdmin(admin.ModelAdmin):
             'fields': ('description', 'terms', 'theme', 'is_active')
         }),
         ('Requirements', {
-            'fields': ('requires_google_form', 'google_form_url', 'requires_contact_info')
+            'fields': ('requires_google_form', 'google_form_url', 'requires_contact_info', 'requires_conversion_proof')
         }),
     )
 
 @admin.register(AdBanner)
 class AdBannerAdmin(admin.ModelAdmin):
-    list_display = ('title', 'offer', 'image', 'description')
+    list_display = ('title', 'offer', 'image_preview', 'description')
     list_filter = ('offer__name',)
     search_fields = ('title', 'description', 'offer__name')
     ordering = ('offer__name',)
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 50px; max-width: 50px;" />', obj.image.url)
+        return "No Image"
+    image_preview.short_description = "Image Preview"
 
 @admin.register(TutorialVideo)
 class TutorialVideoAdmin(admin.ModelAdmin):
@@ -80,6 +95,14 @@ class ReferralAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'offer__name', 'visitor_identifier')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
+
+@admin.register(ReferralClick)
+class ReferralClickAdmin(admin.ModelAdmin):
+    list_display = ('referral', 'ip_address', 'clicked_at')
+    list_filter = ('referral',)
+    search_fields = ('ip_address', 'referral__id')
+    date_hierarchy = 'clicked_at'
+    ordering = ('-clicked_at',)
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
@@ -106,6 +129,30 @@ class GoogleFormSubmissionAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
     readonly_fields = ('created_at',)
 
+# Custom actions for ConversionProof
+def approve_proofs(modeladmin, request, queryset):
+    queryset.update(status='approved')
+approve_proofs.short_description = "Mark selected proofs as approved"
+
+def reject_proofs(modeladmin, request, queryset):
+    queryset.update(status='rejected')
+reject_proofs.short_description = "Mark selected proofs as rejected"
+
+@admin.register(ConversionProof)
+class ConversionProofAdmin(admin.ModelAdmin):
+    list_display = ('user', 'offer', 'status', 'image_preview', 'submitted_at')
+    list_filter = ('status', 'offer')
+    search_fields = ('user__username', 'offer__name')
+    date_hierarchy = 'submitted_at'
+    ordering = ('-submitted_at',)
+    actions = [approve_proofs, reject_proofs]
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 50px; max-width: 50px;" />', obj.image.url)
+        return "No Image"
+    image_preview.short_description = "Image Preview"
+
 @admin.register(PendingVerification)
 class PendingVerificationAdmin(admin.ModelAdmin):
     list_display = ('id', 'user', 'mobile_number', 'created_at', 'is_processed')
@@ -130,6 +177,12 @@ class ApiLogAdmin(admin.ModelAdmin):
     date_hierarchy = 'timestamp'
     ordering = ('-timestamp',)
 
+@admin.register(ApiUsage)
+class ApiUsageAdmin(admin.ModelAdmin):
+    list_display = ('api_name', 'request_count', 'last_reset')
+    list_filter = ('api_name',)
+    search_fields = ('api_name',)
+    ordering = ('api_name',)
 
 @admin.register(MobileValidationCache)
 class MobileValidationCacheAdmin(admin.ModelAdmin):

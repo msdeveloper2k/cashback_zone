@@ -16,10 +16,20 @@
         </div>
         <div class="mb-4">
             <label for="{{ form.email.id_for_label }}" class="block text-gray-700 font-semibold mb-2">Email</label>
-            <input type="email" name="email" id="{{ form.email.id_for_label }}" value="{{ form.email.value|default_if_none:'' }}" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if form.email.errors %}border-red-500{% endif %}">
+            <div class="flex items-center gap-2">
+                <input type="email" name="email" id="{{ form.email.id_for_label }}" value="{{ form.email.value|default_if_none:'' }}" class="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 {% if form.email.errors %}border-red-500{% endif %}" required>
+                <button type="button" id="verifyEmailBtn" class="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition duration-300" onclick="sendVerificationCode('signup')">Verify Email</button>
+            </div>
             {% if form.email.errors %}
                 <p class="text-red-500 text-sm mt-1">{{ form.email.errors }}</p>
             {% endif %}
+            <!-- Verification Code Input (Hidden Initially) -->
+            <div id="verificationSection" class="mt-2 hidden">
+                <label for="verificationCode" class="block text-gray-700 font-semibold mb-2">Enter Verification Code</label>
+                <input type="text" id="verificationCode" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter the code sent to your email">
+                <button type="button" class="mt-2 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition duration-300" onclick="verifyCode('signup')">Submit Code</button>
+                <p id="verificationStatus" class="text-sm mt-1"></p>
+            </div>
         </div>
         <div class="mb-4">
             <label for="{{ form.password1.id_for_label }}" class="block text-gray-700 font-semibold mb-2">Password</label>
@@ -35,8 +45,129 @@
                 <p class="text-red-500 text-sm mt-1">{{ form.password2.errors }}</p>
             {% endif %}
         </div>
-        <button type="submit" class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300">Sign Up</button>
+        <button type="submit" id="submitBtn" class="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition duration-300" disabled>Sign Up</button>
     </form>
     <p class="mt-4 text-center text-gray-600">Already have an account? <a href="{% url 'account_login' %}" class="text-blue-500 hover:underline">Login</a></p>
 </div>
+
+<script>
+let isSendingCode = false; // Flag to prevent multiple requests
+let lastSentTime = 0; // Track the last time a code was sent
+const COOLDOWN_SECONDS = 30; // 30-second cooldown between requests
+
+function sendVerificationCode(formType) {
+    const emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'email' : 'lead_email'));
+    const email = emailInput.value;
+    const verificationSection = document.getElementById(formType === 'signup' ? 'verificationSection' : `verificationSection-${formType}`);
+    const verificationStatus = document.getElementById(formType === 'signup' ? 'verificationStatus' : `verificationStatus-${formType}`);
+    const verifyEmailBtn = document.getElementById(formType === 'signup' ? 'verifyEmailBtn' : `verifyEmailBtn${formType.charAt(0).toUpperCase() + formType.slice(1)}`);
+
+    if (!email) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "Please enter a valid email address.";
+        return;
+    }
+
+    const currentTime = Date.now() / 1000; // Current time in seconds
+    if (isSendingCode || (currentTime - lastSentTime < COOLDOWN_SECONDS)) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = `Please wait ${Math.ceil(COOLDOWN_SECONDS - (currentTime - lastSentTime))} seconds before requesting a new code.`;
+        return;
+    }
+
+    isSendingCode = true;
+    verifyEmailBtn.disabled = true;
+    verificationStatus.textContent = "Sending code...";
+
+    fetch("{% url 'send_verification_email' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: `email=${encodeURIComponent(email)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            verificationStatus.classList.remove('text-red-500');
+            verificationStatus.classList.add('text-green-500');
+            verificationStatus.textContent = data.message;
+            verificationSection.classList.remove('hidden');
+            lastSentTime = Date.now() / 1000;
+        } else {
+            verificationStatus.classList.remove('text-green-500');
+            verificationStatus.classList.add('text-red-500');
+            verificationStatus.textContent = data.message;
+        }
+    })
+    .catch(error => {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "An error occurred while sending the code.";
+        console.error(error);
+    })
+    .finally(() => {
+        isSendingCode = false;
+        verifyEmailBtn.disabled = false;
+    });
+}
+
+function verifyCode(formType) {
+    const verificationInput = document.getElementById(formType === 'signup' ? 'verificationCode' : `verificationCode-${formType}`);
+    const verificationStatus = document.getElementById(formType === 'signup' ? 'verificationStatus' : `verificationStatus-${formType}`);
+    const submitBtn = document.getElementById(formType === 'signup' ? 'submitBtn' : `submitBtn-${formType}`);
+    const emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'email' : 'lead_email'));
+    const code = verificationInput.value;
+    const email = emailInput.value;
+
+    if (!code) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "Please enter the verification code.";
+        return;
+    }
+
+    if (!email) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "Email field is missing.";
+        return;
+    }
+
+    // Send AJAX request to verify the code
+    fetch("{% url 'verify_email_code' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: `code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            verificationStatus.classList.remove('text-red-500');
+            verificationStatus.classList.add('text-green-500');
+            verificationStatus.textContent = data.message;
+            isEmailVerified = true;
+            submitBtn.disabled = false;
+        } else {
+            verificationStatus.classList.remove('text-green-500');
+            verificationStatus.classList.add('text-red-500');
+            verificationStatus.textContent = data.message;
+            isEmailVerified = false;
+            submitBtn.disabled = true;
+        }
+    })
+    .catch(error => {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "An error occurred while verifying the code.";
+        console.error(error);
+    });
+}
+</script>
 {% endblock %}

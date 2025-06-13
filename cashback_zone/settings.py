@@ -18,6 +18,7 @@ ALLOWED_HOSTS = [
     'localhost:8000',
     '127.0.0.1',
     '192.168.1.17',
+    '192.168.1.11'
 ]
 
 INSTALLED_APPS = [    
@@ -81,6 +82,13 @@ TEMPLATES = [
        },
    ]
 
+# Session configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Use database-backed sessions
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds
+SESSION_COOKIE_SECURE = True  # Use True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = True  # Save the session on every request
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -172,6 +180,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files settings
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'  # Removed duplicate definition
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Remove LOCALE_PATHS if not using internationalization
 # LOCALE_PATHS = [BASE_DIR / 'locale']

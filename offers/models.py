@@ -37,10 +37,37 @@ class Offer(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     requires_google_form = models.BooleanField(default=False)
     google_form_url = models.URLField(blank=True, null=True)
-    requires_contact_info = models.BooleanField(default=False)    
+    requires_contact_info = models.BooleanField(default=False)
+    requires_lead_form = models.BooleanField(default=False)
+    category = models.CharField(max_length=50, choices=[
+        ('ecommerce', 'Ecommerce'),
+        ('finance', 'Finance'),
+        ('education', 'Education'),
+        ('other', 'Other'),
+    ], default='other')
+    conversion_type = models.CharField(max_length=50, choices=[
+        ('lead', 'Lead'),
+        ('sale', 'Sale'),
+        ('signup', 'Signup'),
+    ], default='lead')    
+    requires_conversion_proof = models.BooleanField(default=False)    
 
     def __str__(self):
         return self.name
+
+class ConversionProof(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    offer = models.ForeignKey('Offer', on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='conversion_proofs/')
+    status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ], default='pending')
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"ConversionProof for Offer {self.offer.id} by {self.user.username}"
 
 class AdBanner(models.Model):
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name='ad_banners')
@@ -182,3 +209,21 @@ class ApiLog(models.Model):
 
     def __str__(self):
         return f"{self.timestamp} - {self.api_name} - {self.level}: {self.message}"
+    
+class EmailVerification(models.Model):
+    email = models.EmailField(unique=True)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        # Set expiration to 10 minutes from creation
+        if not self.pk:
+            self.expires_at = timezone.now() + timezone.timedelta(minutes=10)
+        super().save(*args, **kwargs)
+
+    def is_expired(self):
+        return timezone.now() > self.expires_at
+
+    def __str__(self):
+        return f"{self.email} - {self.code}"

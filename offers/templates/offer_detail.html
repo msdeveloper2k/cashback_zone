@@ -55,6 +55,80 @@
         cursor: pointer;
         color: #4B5563;
     }
+    .captcha-grid {
+        border: 2px solid #e5e7eb; /* Tailwind gray-200 */
+        border-radius: 8px;
+        padding: 8px;
+        background-color: #f9fafb; /* Tailwind gray-50 */
+    }
+    .image-preview {
+        max-width: 100px;
+        max-height: 100px;
+        object-fit: cover;
+        margin: 5px;
+        border: 2px solid #e5e7eb;
+        border-radius: 5px;
+    }
+    /* Updated styles for mobile-friendly requirements section */
+    .requirements-list li {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        gap: 0.5rem; /* Space between elements */
+        padding: 0.5rem 0; /* Vertical padding for better touch spacing */
+    }
+    .requirements-list .requirement-text {
+        flex: 1 1 100%; /* Full width on mobile */
+    }
+    .requirements-list .status-action {
+        flex: 1 1 100%; /* Full width on mobile */
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: 1.5rem; /* Indent to align with text above */
+    }
+    .requirements-list .auth-links {
+        display: inline-flex;
+        flex-wrap: nowrap; /* Prevent wrapping of "log in" and "register" */
+        gap: 0.5rem;
+    }
+    .requirements-list .auth-links a {
+        background-color: #3b82f6; /* Tailwind blue-500 */
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem; /* Tailwind rounded-md */
+        font-size: 0.875rem; /* Tailwind text-sm */
+        line-height: 1.25rem;
+        text-decoration: none;
+        transition: background-color 0.3s;
+    }
+    .requirements-list .auth-links a:hover {
+        background-color: #2563eb; /* Tailwind blue-600 */
+    }
+    @media (min-width: 640px) {
+        .requirements-list li {
+            flex-wrap: nowrap;
+            align-items: center;
+        }
+        .requirements-list .requirement-text {
+            flex: 0 1 auto;
+        }
+        .requirements-list .status-action {
+            flex: 0 1 auto;
+            margin-left: 0.5rem;
+        }
+        .requirements-list .auth-links a {
+            background-color: transparent;
+            color: #3b82f6; /* Tailwind blue-500 */
+            padding: 0;
+            border-radius: 0;
+        }
+        .requirements-list .auth-links a:hover {
+            background-color: transparent;
+            text-decoration: underline;
+        }
+    }
     @media (max-width: 640px) {
         .popup {
             top: 10px;
@@ -128,11 +202,11 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <p class="text-gray-600 flex items-center">
                         <i class="fas fa-id-badge mr-2 text-blue-500"></i>
-                        <strong>Referral ID:</strong> {{ offer_referral.id }}
+                        <strong>Referral ID: &nbsp;</strong> {{ offer_referral.id }}
                     </p>
                     <p class="text-gray-600 flex items-center">
                         <i class="fas fa-user mr-2 text-blue-500"></i>
-                        <strong>Referred By:</strong> 
+                        <strong>Referred By: &nbsp;</strong>
                         {% if offer_referral.user %}
                             {{ offer_referral.user.username }}
                         {% else %}
@@ -141,15 +215,15 @@
                     </p>
                     <p class="text-gray-600 flex items-center">
                         <i class="fas fa-info-circle mr-2 text-blue-500"></i>
-                        <strong>Status:</strong> {{ offer_referral.working_state|title }}
+                        <strong>Status: &nbsp;</strong> {{ offer_referral.working_state|title }}
                     </p>
                     <p class="text-gray-600 flex items-center">
                         <i class="fas fa-mouse-pointer mr-2 text-blue-500"></i>
-                        <strong>Clicks:</strong> {{ offer_referral.click_count }}
+                        <strong>Clicks: &nbsp;</strong> {{ offer_referral.click_count }}
                     </p>
                     <p class="text-gray-600 flex items-center">
                         <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
-                        <strong>Created At:</strong> {{ offer_referral.created_at|date:"F d, Y, H:i" }}
+                        <strong>Created At: &nbsp;</strong> {{ offer_referral.created_at|date:"F d, Y, H:i" }}
                     </p>
                 </div>
             </div>
@@ -181,142 +255,257 @@
                     <div>
                         <p class="text-gray-600 flex items-center">
                             <i class="fas fa-rupee-sign mr-2 text-blue-500"></i>
-                            <strong>Price:</strong> ₹{{ offer.price|default:"N/A" }}
+                            <strong>Price: &nbsp;</strong> ₹{{ offer.price|default:"N/A" }}
                         </p>
                         <p class="text-gray-600 mt-2 flex items-center">
                             <i class="fas fa-palette mr-2 text-blue-500"></i>
-                            <strong>Theme:</strong> 
+                            <strong>Theme: &nbsp;</strong> 
                             <span class="{% if offer.theme == 'blue' %}text-blue-500{% elif offer.theme == 'red' %}text-red-500{% elif offer.theme == 'green' %}text-green-500{% elif offer.theme == 'purple' %}text-purple-500{% endif %} font-semibold">
                                 {{ offer.theme|title|default:"N/A" }}
                             </span>
                         </p>
                         <p class="text-gray-600 mt-2 flex items-center">
                             <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
-                            <strong>Created:</strong> {{ offer.created_at|date:"F d, Y, H:i"|default:"N/A" }}
+                            <strong>Created: &nbsp;</strong> {{ offer.created_at|date:"F d, Y, H:i"|default:"N/A" }}
                         </p>
                         <p class="text-gray-600 mt-2 flex items-center">
                             <i class="fas fa-calendar-check mr-2 text-blue-500"></i>
-                            <strong>Updated:</strong> {{ offer.updated_at|date:"F d, Y, H:i"|default:"N/A" }}
+                            <strong>Updated: &nbsp;</strong> {{ offer.updated_at|date:"F d, Y, H:i"|default:"N/A" }}
                         </p>
                         <p class="text-gray-600 mt-2 flex items-center">
                             <i class="fas fa-clock mr-2 text-blue-500"></i>
-                            <strong>Valid Until:</strong> {{ offer.valid_until|date:"F d, Y"|default:"Ongoing" }}
+                            <strong>Valid Until: &nbsp;</strong> {{ offer.valid_until|date:"F d, Y"|default:"Ongoing" }}
                         </p>
                     </div>
                     <div>
                         <p class="text-gray-600 flex items-center">
-                            <i class="fas fa-align-left mr-2 text-blue-500"></i>
-                            <strong>Description:</strong> {{ offer.description|default:"No description available." }}
-                        </p>
-                        <p class="text-gray-600 mt-2 flex items-center">
                             <i class="fas fa-gift mr-2 text-blue-500"></i>
-                            <strong>Reward:</strong> {{ offer.reward|default:"Earn exciting rewards!" }}
+                            <strong>Reward: &nbsp;</strong> {{ offer.reward|default:"Earn exciting rewards!" }}
                         </p>
                     </div>
                 </div>
-
-                <!-- Requirements Section -->
-                <div class="mt-4">
-                    <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
-                        <i class="fas fa-check-square mr-2 text-blue-500"></i> Requirements to Grab Offer
-                    </h3>
-                    <ul class="text-gray-600 space-y-2">
-                        {% if offer.requires_google_form and offer.google_form_url %}
-                            <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %} flex items-center">
-                                <i class="fas fa-file-alt mr-2"></i>
-                                <strong>Required:</strong> Complete this 
-                                <a href="{{ offer.google_form_url }}" target="_blank" class="underline hover:text-blue-600">Google Form</a> (Compulsory).
-                                <span class="ml-2">
-                                    {% if google_form_completed %}
-                                        <span class="text-green-600">✔ Completed</span>
-                                    {% else %}
-                                        <span class="text-red-600">✘ Not Completed</span>
-                                        <form method="post" action="{% url 'confirm_google_form_submission' offer_id=offer.id %}" class="inline">
-                                            {% csrf_token %}
-                                            <button type="submit" class="ml-2 bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition duration-300 inline-flex items-center">
-                                                <i class="fas fa-check mr-2"></i> I’ve Completed the Form
-                                            </button>
-                                        </form>
-                                    {% endif %}
-                                </span>
-                            </li>
-                        {% endif %}
-                        {% if offer.requires_contact_info %}
-                            <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %} flex items-center">
-                                <i class="fas fa-address-book mr-2"></i>
-                                <strong>Required:</strong> Provide your name, email, and mobile number below.
-                                <span class="ml-2">
-                                    {% if contact_info_submitted %}
-                                        <span class="text-green-600">✔ Submitted</span>
-                                    {% else %}
-                                        <span class="text-red-600">✘ Not Submitted</span>
-                                    {% endif %}
-                                </span>
-                            </li>
-                            {% if user.is_authenticated %}
-                                <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %} flex items-center">
-                                    <i class="fas fa-envelope mr-2"></i>
-                                    <strong>Email Verification:</strong>
-                                    <span class="ml-2">
-                                        {% if email_verified %}
-                                            <span class="text-green-600">✔ Verified</span>
-                                        {% else %}
-                                            <span class="text-red-600">✘ Not Verified</span>
-                                        {% endif %}
-                                    </span>
-                                </li>
-                                <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %} flex items-center">
-                                    <i class="fas fa-mobile-alt mr-2"></i>
-                                    <strong>Mobile Verification:</strong>
-                                    <span class="ml-2">
-                                        {% if mobile_verified %}
-                                            <span class="text-green-600">✔ Verified</span>
-                                        {% else %}
-                                            <span class="text-red-600">✘ Not Verified</span>
-                                        {% endif %}
-                                    </span>
-                                </li>
-                                {% if contact_info_submitted and not email_verified and not mobile_verified %}
-                                    <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %} flex items-center">
-                                        <i class="fas fa-exclamation-circle mr-2 text-red-500"></i>
-                                        <span class="text-red-600">Please verify either your email or mobile to fully process your submission.</span>
-                                    </li>
-                                {% endif %}
-                            {% endif %}
-                        {% endif %}
-                        {% if not offer.requires_google_form and not offer.requires_contact_info %}
-                            <li class="text-gray-600 flex items-center">
-                                <i class="fas fa-info-circle mr-2"></i> No additional requirements to grab this offer.
-                            </li>
-                        {% endif %}
-                    </ul>
-                </div>
-
-                <!-- Participate Button -->
-                {% if user.is_authenticated and offer.requires_contact_info and not contact_info_submitted %}
-                    <div class="mt-4 animate__animated animate__slideInUp">
-                        <button onclick="openModal()" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 flex items-center">
-                            <i class="fas fa-user-plus mr-2"></i> Participate in This Offer
-                        </button>
-                    </div>
-                {% endif %}
-
-                <!-- Action Buttons (if contact info is not required or already submitted) -->
-                {% if not offer.requires_contact_info or contact_info_submitted %}
-                    <div class="mt-6 flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 animate__animated animate__pulse animate__infinite">
-                        {% if offer_referral and not email_not_verified %}
-                            <a href="{% url 'grab_offer' offer_id=offer.id referral_id=offer_referral.id %}" target="_blank" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 inline-flex items-center">
-                                <i class="fas fa-hand-pointer mr-2"></i> Grab Now
-                            </a>
-                        {% else %}
-                            <a href="{% url 'grab_offer' offer_id=offer.id %}" target="_blank" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 inline-flex items-center">
-                                <i class="fas fa-hand-pointer mr-2"></i> Grab Now
-                            </a>
-                        {% endif %}
-                    </div>
-                {% endif %}
             </div>
         </div>
+
+        <!-- Offer Description Section -->
+        <div class="mt-6">
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4 animate__animated animate__fadeInUp flex items-center">
+                <i class="fas fa-align-left mr-2"></i> Offer Description
+            </h2>
+            <p class="text-gray-600">{{ offer.description|default:"No description available." }}</p>
+        </div>
+
+        <!-- Requirements Section -->
+        <div class="mt-6">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
+                <i class="fas fa-check-square mr-2 text-blue-500"></i> Requirements to Grab Offer
+            </h3>
+            <ul class="text-gray-600 space-y-2 requirements-list">
+                {% if offer.requires_google_form and offer.google_form_url %}
+                    <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                        <span class="requirement-text">
+                            <i class="fas fa-file-alt mr-2"></i>
+                            <strong>Required:</strong> Complete this 
+                            <a href="{{ offer.google_form_url }}" target="_blank" class="underline hover:text-blue-600">Google Form</a> (Compulsory).
+                        </span>
+                        <span class="status-action">
+                            {% if user.is_authenticated %}
+                                {% if google_form_completed %}
+                                    <span class="text-green-600">✔ Completed</span>
+                                {% else %}
+                                    <span class="text-red-600">✘ Not Completed</span>
+                                    <form method="post" action="{% url 'confirm_google_form_submission' offer_id=offer.id %}" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="ml-2 bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition duration-300 inline-flex items-center">
+                                            <i class="fas fa-check mr-2"></i> I’ve Completed the Form
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-600 inline-flex items-center">
+                                    <i class="fas fa-lock mr-1"></i> Please &nbsp;
+                                    <span class="auth-links">
+                                        <a href="{% url 'account_login' %}?next={{ request.path }}">Log In</a> or &nbsp;
+                                        <a href="{% url 'account_signup' %}?next={{ request.path }}">Register</a>
+                                    </span> 
+                                    &nbsp; to complete this step.
+                                </span>
+                            {% endif %}
+                        </span>
+                    </li>
+                {% endif %}
+                {% if offer.requires_contact_info %}
+                    <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                        <span class="requirement-text">
+                            <i class="fas fa-address-book mr-2"></i>
+                            <strong>Required:</strong> Provide your name, email, and mobile number below.
+                        </span>
+                        <span class="status-action">
+                            {% if user.is_authenticated %}
+                                {% if contact_info_submitted %}
+                                    <span class="text-green-600">✔ Submitted</span>
+                                {% else %}
+                                    <span class="text-red-600">✘ Not Submitted</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-600 inline-flex items-center">
+                                    <i class="fas fa-lock mr-1"></i> Please &nbsp;
+                                    <span class="auth-links">
+                                        <a href="{% url 'account_login' %}?next={{ request.path }}">Log In</a> or &nbsp;
+                                        <a href="{% url 'account_signup' %}?next={{ request.path }}">Register</a>
+                                    </span> 
+                                    &nbsp; to submit your contact info.
+                                </span>
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                            <span class="requirement-text">
+                                <i class="fas fa-envelope mr-2"></i>
+                                <strong>Email Verification:</strong>
+                            </span>
+                            <span class="status-action">
+                                {% if email_verified %}
+                                    <span class="text-green-600">✔ Verified</span>
+                                {% else %}
+                                    <span class="text-red-600">✘ Not Verified</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                            <span class="requirement-text">
+                                <i class="fas fa-mobile-alt mr-2"></i>
+                                <strong>Mobile Verification:</strong>
+                            </span>
+                            <span class="status-action">
+                                {% if mobile_verified %}
+                                    <span class="text-green-600">✔ Verified</span>
+                                {% else %}
+                                    <span class="text-red-600">✘ Not Verified</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                        {% if contact_info_submitted and not email_verified and not mobile_verified %}
+                            <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                                <span class="requirement-text">
+                                    <i class="fas fa-exclamation-circle mr-2 text-red-500"></i>
+                                    <span class="text-red-600">Please verify either your email or mobile to fully process your submission.</span>
+                                </span>
+                            </li>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+                {% if offer.requires_lead_form %}
+                    <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                        <span class="requirement-text">
+                            <i class="fas fa-address-card mr-2"></i>
+                            <strong>Required:</strong> Submit the lead form below.
+                        </span>
+                        <span class="status-action">
+                            {% if user.is_authenticated %}
+                                {% if lead_form_submitted %}
+                                    <span class="text-green-600">✔ Submitted</span>
+                                {% else %}
+                                    <span class="text-red-600">✘ Not Submitted</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-600 inline-flex items-center">
+                                    <i class="fas fa-lock mr-1"></i> Please &nbsp;
+                                    <span class="auth-links">
+                                        <a href="{% url 'account_login' %}?next={{ request.path }}">Log In</a> or &nbsp;
+                                        <a href="{% url 'account_signup' %}?next={{ request.path }}">Register</a>
+                                    </span> 
+                                    &nbsp; to submit the lead form.
+                                </span>
+                            {% endif %}
+                        </span>
+                    </li>
+                {% endif %}
+                {% if offer.requires_conversion_proof %}
+                    <li class="{% if offer.theme == 'blue' %}text-blue-800{% elif offer.theme == 'red' %}text-red-800{% elif offer.theme == 'green' %}text-green-800{% elif offer.theme == 'purple' %}text-purple-800{% endif %}">
+                        <span class="requirement-text">
+                            <i class="fas fa-camera mr-2"></i>
+                            <strong>Required:</strong> Upload proof of successful conversion (e.g., screenshot of purchase confirmation).
+                        </span>
+                        <span class="status-action">
+                            {% if user.is_authenticated %}
+                                {% if proof_submitted %}
+                                    <span class="text-green-600">✔ Submitted (Status: {{ proof_status|title }})</span>
+                                    {% if proof_status == 'pending' %}
+                                        <span class="ml-2 text-yellow-600 inline-flex items-center">
+                                            <i class="fas fa-hourglass-half mr-1"></i> Under Review
+                                        </span>
+                                    {% elif proof_status == 'rejected' %}
+                                        <span class="ml-2 text-red-600 inline-flex items-center">
+                                            <i class="fas fa-times-circle mr-1"></i> Rejected
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-red-600">✘ Not Submitted</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-600 inline-flex items-center">
+                                    <i class="fas fa-lock mr-1"></i> Please &nbsp;
+                                    <span class="auth-links">
+                                        <a href="{% url 'account_login' %}?next={{ request.path }}">Log In</a> or &nbsp;
+                                        <a href="{% url 'account_signup' %}?next={{ request.path }}">Register</a>
+                                    </span> 
+                                    &nbsp; to upload your proof.
+                                </span>
+                            {% endif %}
+                        </span>
+                    </li>
+                {% endif %}
+                {% if not offer.requires_google_form and not offer.requires_contact_info and not offer.requires_lead_form and not offer.requires_conversion_proof %}
+                    <li class="text-gray-600">
+                        <span class="requirement-text">
+                            <i class="fas fa-info-circle mr-2"></i> No additional requirements to grab this offer.
+                        </span>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <!-- Participate Buttons -->
+        <div class="mt-4 space-y-4">
+            {% if user.is_authenticated and offer.requires_contact_info and not contact_info_submitted %}
+                <div class="animate__animated animate__slideInUp">
+                    <button onclick="openModal('contactModal')" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 flex items-center w-full sm:w-auto">
+                        <i class="fas fa-user-plus mr-2"></i> Participate in This Offer (Contact Info)
+                    </button>
+                </div>
+            {% endif %}
+            {% if user.is_authenticated and offer.requires_lead_form and not lead_form_submitted %}
+                <div class="animate__animated animate__slideInUp">
+                    <button onclick="openModal('leadModal')" class="bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition duration-300 flex items-center w-full sm:w-auto">
+                        <i class="fas fa-address-card mr-2"></i> Submit Lead Form
+                    </button>
+                </div>
+            {% endif %}
+            {% if user.is_authenticated and offer.requires_conversion_proof and not proof_submitted %}
+                <div class="animate__animated animate__slideInUp">
+                    <button onclick="openModal('proofModal')" class="bg-purple-500 text-white px-6 py-3 rounded-full hover:bg-purple-600 transition duration-300 flex items-center w-full sm:w-auto">
+                        <i class="fas fa-camera mr-2"></i> Upload Conversion Proof
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Action Buttons (if all requirements are met) -->
+        {% if not offer.requires_contact_info or contact_info_submitted and not offer.requires_lead_form or lead_form_submitted and not offer.requires_conversion_proof or proof_submitted and proof_status != 'pending' and proof_status != 'rejected' %}
+            <div class="mt-6 flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 animate__animated animate__pulse animate__infinite">
+                {% if offer_referral and not email_not_verified %}
+                    <a href="{% url 'grab_offer' offer_id=offer.id referral_id=offer_referral.id %}" target="_blank" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 inline-flex items-center">
+                        <i class="fas fa-hand-pointer mr-2"></i> Grab Now
+                    </a>
+                {% else %}
+                    <a href="{% url 'grab_offer' offer_id=offer.id %}" target="_blank" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 inline-flex items-center">
+                        <i class="fas fa-hand-pointer mr-2"></i> Grab Now
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
 
         <!-- Tutorial Videos Section -->
         {% if tutorial_videos %}
@@ -408,15 +597,15 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <p class="text-gray-600 flex items-center">
                             <i class="fas fa-user mr-2 text-blue-500"></i>
-                            <strong>Username:</strong> {{ profile_info.username }}
+                            <strong>Username: &nbsp;</strong> {{ profile_info.username }}
                         </p>
                         <p class="text-gray-600 flex items-center">
                             <i class="fas fa-envelope mr-2 text-blue-500"></i>
-                            <strong>Email:</strong> {{ profile_info.email }}
+                            <strong>Email: &nbsp;</strong> {{ profile_info.email }}
                         </p>
                         <p class="text-gray-600 flex items-center">
                             <i class="fas fa-check-circle mr-2 text-blue-500"></i>
-                            <strong>Email Verified:</strong> 
+                            <strong>Email Verified: &nbsp;</strong> 
                             {% if user.userprofile.email_verified %}
                                 <span class="text-green-600">Yes</span>
                             {% else %}
@@ -426,7 +615,7 @@
                         </p>
                         <p class="text-gray-600 flex items-center">
                             <i class="fas fa-mobile-alt mr-2 text-blue-500"></i>
-                            <strong>Mobile Verified:</strong> 
+                            <strong>Mobile Verified: &nbsp;</strong> 
                             {% if user.userprofile.mobile_verified %}
                                 <span class="text-green-600">Yes</span>
                             {% else %}
@@ -435,11 +624,11 @@
                         </p>
                         <p class="text-gray-600 flex items-center">
                             <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
-                            <strong>Joined:</strong> {{ profile_info.joined|date:"F d, Y, H:i" }}
+                            <strong>Joined: &nbsp;</strong> {{ profile_info.joined|date:"F d, Y, H:i" }}
                         </p>
                         <p class="text-gray-600 flex items-center">
                             <i class="fas fa-level-up-alt mr-2 text-blue-500"></i>
-                            <strong>Profile Level:</strong> {{ profile_level }}
+                            <strong>Profile Level: &nbsp;</strong> {{ profile_level }}
                         </p>
                     </div>
                 </div>
@@ -575,7 +764,7 @@
     {% if user.is_authenticated and offer.requires_contact_info and not contact_info_submitted %}
         <div id="contactModal" class="modal">
             <div class="modal-content animate__animated animate__zoomIn">
-                <span class="close-btn" onclick="closeModal()">×</span>
+                <span class="close-btn" onclick="closeModal('contactModal')">×</span>
                 <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
                     <i class="fas fa-address-book mr-2 text-blue-500"></i> Submit Contact Info
                 </h3>
@@ -594,10 +783,20 @@
                         <label for="email" class="block text-gray-600 flex items-center">
                             <i class="fas fa-envelope mr-2"></i> Email:
                         </label>
-                        {{ contact_form.email }}
+                        <div class="flex items-center gap-2">
+                            {{ contact_form.email }}
+                            <button type="button" id="verifyEmailBtnContact" class="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition duration-300" onclick="sendVerificationCode('contact')">Verify Email</button>
+                        </div>
                         {% if contact_form.email.errors %}
                             <p class="text-red-600 text-sm mt-1">{{ contact_form.email.errors.as_text }}</p>
                         {% endif %}
+                        <!-- Verification Code Input (Hidden Initially) -->
+                        <div id="verificationSection-contact" class="mt-2 hidden">
+                            <label for="verificationCode-contact" class="block text-gray-700 font-semibold mb-2">Enter Verification Code</label>
+                            <input type="text" id="verificationCode-contact" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter the code sent to your email">
+                            <button type="button" class="mt-2 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition duration-300" onclick="verifyCode('contact')">Submit Code</button>
+                            <p id="verificationStatus-contact" class="text-sm mt-1"></p>
+                        </div>
                     </div>
                     <div>
                         <label for="mobile" class="block text-gray-600 flex items-center">
@@ -614,19 +813,124 @@
                             <label class="text-gray-600 mb-2 flex items-center">
                                 <i class="fas fa-shield-alt mr-2"></i> Select the correct image:
                             </label>
-                            <p class="text-gray-600 mb-2">{{ captcha.description }}</p>
-                            <div class="grid grid-cols-3 gap-2">
+                            <p class="text-gray-600 mb-2">
+                                {% with target=captcha.description|slice:"18:-1" %}
+                                    Select the image of a <strong>{{ target }}</strong>
+                                {% endwith %}
+                            </p>
+                            <div class="captcha-grid grid grid-cols-3 gap-2" id="captchaImages">
                                 {% for image in captcha.images %}
                                     <label class="block">
                                         <input type="radio" name="captcha_image" value="{{ image }}" required class="hidden">
-                                        <img src="/static/images/{{ image }}" alt="{{ image }}" width="150" class="w-15 h-24 object-cover rounded-lg border-2 border-gray-300 hover:border-blue-500 cursor-pointer">
+                                        <img src="/static/images/{{ image }}" alt="{{ image }}" class="w-20 h-20 object-cover rounded-lg border-2 border-gray-300 hover:border-blue-500 cursor-pointer">
                                     </label>
                                 {% endfor %}
                             </div>
                         </div>
                     {% endif %}
-                    <button type="submit" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 w-full flex items-center justify-center">
-                        <i class="fas fa-save mr-2"></i> Submit & Grab Offer
+                    <button type="submit" id="submitBtn-contact" class="bg-blue-500 text-white px-6 py-3 rounded-full hover:bg-blue-600 transition duration-300 w-full flex items-center justify-center" disabled>Submit & Grab Offer</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Modal for Lead Form -->
+    {% if user.is_authenticated and offer.requires_lead_form and not lead_form_submitted %}
+        <div id="leadModal" class="modal">
+            <div class="modal-content animate__animated animate__zoomIn">
+                <span class="close-btn" onclick="closeModal('leadModal')">×</span>
+                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                    <i class="fas fa-address-card mr-2 text-green-500"></i> Submit Lead Form
+                </h3>
+                <form method="post" action="{% url 'submit_lead_form' offer_id=offer.id %}" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label for="lead_name" class="block text-gray-600 flex items-center">
+                            <i class="fas fa-user mr-2"></i> Name:
+                        </label>
+                        <input type="text" id="lead_name" name="lead_name" value="{{ user.get_full_name|default:user.username }}" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label for="lead_email" class="block text-gray-600 flex items-center">
+                            <i class="fas fa-envelope mr-2"></i> Email:
+                        </label>
+                        <div class="flex items-center gap-2">
+                            <input type="email" id="lead_email" name="lead_email" value="{{ user.email }}" required class="flex-1 p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <button type="button" id="verifyEmailBtnLead" class="bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition duration-300" onclick="sendVerificationCode('lead')">Verify Email</button>
+                        </div>
+                        <!-- Verification Code Input (Hidden Initially) -->
+                        <div id="verificationSection-lead" class="mt-2 hidden">
+                            <label for="verificationCode-lead" class="block text-gray-700 font-semibold mb-2">Enter Verification Code</label>
+                            <input type="text" id="verificationCode-lead" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter the code sent to your email">
+                            <button type="button" class="mt-2 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition duration-300" onclick="verifyCode('lead')">Submit Code</button>
+                            <p id="verificationStatus-lead" class="text-sm mt-1"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="lead_phone" class="block text-gray-600 flex items-center">
+                            <i class="fas fa-phone mr-2"></i> Phone:
+                        </label>
+                        <input type="tel" id="lead_phone" name="lead_phone" value="{{ contact_form.mobile.value|default:'+12025550123' }}" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    {% if offer.category == 'ecommerce' and offer.conversion_type == 'lead' %}
+                        <div>
+                            <label for="product_interest" class="block text-gray-600 flex items-center">
+                                <i class="fas fa-shopping-cart mr-2"></i> Product Interest:
+                            </label>
+                            <select id="product_interest" name="product_interest" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="">Select an option</option>
+                                <option value="electronics">Electronics</option>
+                                <option value="clothing">Clothing</option>
+                                <option value="home_goods">Home Goods</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    {% elif offer.category == 'finance' and offer.conversion_type == 'lead' %}
+                        <div>
+                            <label for="annual_income" class="block text-gray-600 flex items-center">
+                                <i class="fas fa-money-bill-wave mr-2"></i> Annual Income:
+                            </label>
+                            <input type="text" id="annual_income" name="annual_income" placeholder="Enter your annual income" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                        </div>
+                    {% elif offer.category == 'education' and offer.conversion_type == 'lead' %}
+                        <div>
+                            <label for="course_interest" class="block text-gray-600 flex items-center">
+                                <i class="fas fa-book mr-2"></i> Course Interest:
+                            </label>
+                            <select id="course_interest" name="course_interest" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <option value="">Select a course</option>
+                                <option value="computer_science">Computer Science</option>
+                                <option value="business">Business</option>
+                                <option value="arts">Arts</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    {% endif %}
+                    <button type="submit" id="submitBtn-lead" class="bg-green-500 text-white px-6 py-3 rounded-full hover:bg-green-600 transition duration-300 w-full flex items-center justify-center" disabled>Submit Lead Form</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Modal for Conversion Proof Upload -->
+    {% if user.is_authenticated and offer.requires_conversion_proof and not proof_submitted %}
+        <div id="proofModal" class="modal">
+            <div class="modal-content animate__animated animate__zoomIn">
+                <span class="close-btn" onclick="closeModal('proofModal')">×</span>
+                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                    <i class="fas fa-camera mr-2 text-purple-500"></i> Upload Conversion Proof
+                </h3>
+                <form method="post" action="{% url 'submit_conversion_proof' offer_id=offer.id %}" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    <div>
+                        <label for="proof_images" class="block text-gray-600 flex items-center">
+                            <i class="fas fa-image mr-2"></i> Upload Proof Images (e.g., screenshot of purchase confirmation):
+                        </label>
+                        <input type="file" id="proof_images" name="proof_images" multiple accept="image/*" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <div id="imagePreview" class="mt-2 flex flex-wrap gap-2"></div>
+                    </div>
+                    <button type="submit" class="bg-purple-500 text-white px-6 py-3 rounded-full hover:bg-purple-600 transition duration-300 w-full flex items-center justify-center">
+                        <i class="fas fa-upload mr-2"></i> Submit Proof
                     </button>
                 </form>
             </div>
@@ -634,15 +938,15 @@
     {% endif %}
 </div>
 
-<!-- JavaScript for Modal, Popup, Toggle, Copy, and CAPTCHA -->
+<!-- JavaScript for Modal, Popup, Toggle, Copy, CAPTCHA, Image Preview, and Email Verification -->
 <script>
-function openModal() {
-    const modal = document.getElementById('contactModal');
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
     modal.style.display = 'flex';
 }
 
-function closeModal() {
-    const modal = document.getElementById('contactModal');
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
     modal.style.display = 'none';
 }
 
@@ -653,7 +957,139 @@ function toggleUserInfo() {
     toggleIcon.classList.toggle('rotate-180');
 }
 
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+// Email Verification Logic
+let isEmailVerified = false;
+const VERIFICATION_CODE = "123456"; // Simulated verification code
+
+let isSendingCode = false; // Flag to prevent multiple requests
+let lastSentTime = 0; // Track the last time a code was sent
+const COOLDOWN_SECONDS = 30; // 30-second cooldown between requests
+
+function sendVerificationCode(formType) {
+    const emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'email' : 'lead_email'));
+    const email = emailInput.value;
+    const verificationSection = document.getElementById(formType === 'signup' ? 'verificationSection' : `verificationSection-${formType}`);
+    const verificationStatus = document.getElementById(formType === 'signup' ? 'verificationStatus' : `verificationStatus-${formType}`);
+    const verifyEmailBtn = document.getElementById(formType === 'signup' ? 'verifyEmailBtn' : `verifyEmailBtn${formType.charAt(0).toUpperCase() + formType.slice(1)}`);
+
+    if (!email) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "Please enter a valid email address.";
+        return;
+    }
+
+    const currentTime = Date.now() / 1000; // Current time in seconds
+    if (isSendingCode || (currentTime - lastSentTime < COOLDOWN_SECONDS)) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = `Please wait ${Math.ceil(COOLDOWN_SECONDS - (currentTime - lastSentTime))} seconds before requesting a new code.`;
+        return;
+    }
+
+    isSendingCode = true;
+    verifyEmailBtn.disabled = true;
+    verificationStatus.textContent = "Sending code...";
+
+    fetch("{% url 'send_verification_email' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: `email=${encodeURIComponent(email)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            verificationStatus.classList.remove('text-red-500');
+            verificationStatus.classList.add('text-green-500');
+            verificationStatus.textContent = data.message;
+            verificationSection.classList.remove('hidden');
+            lastSentTime = Date.now() / 1000;
+        } else {
+            verificationStatus.classList.remove('text-green-500');
+            verificationStatus.classList.add('text-red-500');
+            verificationStatus.textContent = data.message;
+        }
+    })
+    .catch(error => {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "An error occurred while sending the code.";
+        console.error(error);
+    })
+    .finally(() => {
+        isSendingCode = false;
+        verifyEmailBtn.disabled = false;
+    });
+}
+
+function verifyCode(formType) {
+    const verificationInput = document.getElementById(formType === 'signup' ? 'verificationCode' : `verificationCode-${formType}`);
+    const verificationStatus = document.getElementById(formType === 'signup' ? 'verificationStatus' : `verificationStatus-${formType}`);
+    const submitBtn = document.getElementById(formType === 'signup' ? 'submitBtn' : `submitBtn-${formType}`);
+    const emailInput = document.getElementById(formType === 'signup' ? '{{ form.email.id_for_label }}' : (formType === 'contact' ? 'email' : 'lead_email'));
+    const code = verificationInput.value;
+    const email = emailInput.value;
+
+    if (!code) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "Please enter the verification code.";
+        return;
+    }
+
+    if (!email) {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "Email field is missing.";
+        return;
+    }
+
+    // Send AJAX request to verify the code
+    fetch("{% url 'verify_email_code' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRFToken": "{{ csrf_token }}",
+        },
+        body: `code=${encodeURIComponent(code)}&email=${encodeURIComponent(email)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            verificationStatus.classList.remove('text-red-500');
+            verificationStatus.classList.add('text-green-500');
+            verificationStatus.textContent = data.message;
+            isEmailVerified = true;
+            submitBtn.disabled = false;
+        } else {
+            verificationStatus.classList.remove('text-green-500');
+            verificationStatus.classList.add('text-red-500');
+            verificationStatus.textContent = data.message;
+            isEmailVerified = false;
+            submitBtn.disabled = true;
+        }
+    })
+    .catch(error => {
+        verificationStatus.classList.remove('text-green-500');
+        verificationStatus.classList.add('text-red-500');
+        verificationStatus.textContent = "An error occurred while verifying the code.";
+        console.error(error);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Handle popups
     document.querySelectorAll('.popup').forEach((popup, index) => {
         popup.style.display = 'block';
         setTimeout(() => {
@@ -661,6 +1097,38 @@ document.addEventListener('DOMContentLoaded', () => {
             popup.classList.add('animate__fadeOutUp');
         }, 3000 + index * 500);
     });
+
+    // Shuffle CAPTCHA images
+    const captchaImagesContainer = document.getElementById('captchaImages');
+    if (captchaImagesContainer) {
+        const labels = Array.from(captchaImagesContainer.getElementsByTagName('label'));
+        const shuffledLabels = shuffleArray(labels);
+        captchaImagesContainer.innerHTML = '';
+        shuffledLabels.forEach(label => captchaImagesContainer.appendChild(label));
+    }
+
+    // Image preview for proof upload
+    const proofImagesInput = document.getElementById('proof_images');
+    const imagePreview = document.getElementById('imagePreview');
+    if (proofImagesInput && imagePreview) {
+        proofImagesInput.addEventListener('change', function() {
+            imagePreview.innerHTML = ''; // Clear previous previews
+            const files = this.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.classList.add('image-preview');
+                        imagePreview.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+    }
 });
 
 function copyReferralLink(link) {
@@ -673,7 +1141,19 @@ function copyReferralLink(link) {
 
 document.getElementById('contactModal')?.addEventListener('click', (e) => {
     if (e.target === document.getElementById('contactModal')) {
-        closeModal();
+        closeModal('contactModal');
+    }
+});
+
+document.getElementById('leadModal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('leadModal')) {
+        closeModal('leadModal');
+    }
+});
+
+document.getElementById('proofModal')?.addEventListener('click', (e) => {
+    if (e.target === document.getElementById('proofModal')) {
+        closeModal('proofModal');
     }
 });
 

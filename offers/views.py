@@ -6,7 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
-from .models import AdBanner, ApiLog, ApiUsage, Offer, Referral, ReferralClick, TutorialVideo, UserProfile, PendingVerification, ContactInfo, GoogleFormSubmission
+from .models import AdBanner, ApiLog, ApiUsage, Offer, Referral, ReferralClick, TutorialVideo, UserProfile, PendingVerification, ContactInfo, GoogleFormSubmission, ConversionProof
 from django.utils.dateparse import parse_datetime
 import json
 from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
@@ -23,6 +23,9 @@ from django.utils.encoding import force_str
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.models import User
 from allauth.account.views import SignupView
+from django.core.mail import send_mail
+import string
+import time
 
 # CAPTCHA options (simple image-based CAPTCHA with descriptions)
 CAPTCHA_OPTIONS = [
@@ -127,6 +130,35 @@ def confirm_google_form_submission(request, offer_id):
     
     return redirect('offer_detail', offer_id=offer.id)
 
+# Submit Conversion Proof View
+def submit_conversion_proof(request, offer_id):
+    offer = get_object_or_404(Offer, id=offer_id)
+    
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            messages.error(request, "You must be logged in to submit conversion proof.")
+            return redirect('account_login')
+        
+        # Handle multiple image uploads
+        proof_images = request.FILES.getlist('proof_images')
+        if not proof_images:
+            messages.error(request, "Please upload at least one proof image.")
+            return redirect('offer_detail', offer_id=offer.id)
+        
+        # Save each image as a separate ConversionProof entry
+        for image in proof_images:
+            ConversionProof.objects.create(
+                user=request.user,
+                offer=offer,
+                image=image,
+                status='pending'
+            )
+        
+        messages.success(request, "Conversion proof submitted successfully! It will be reviewed soon.")
+        return redirect('offer_detail', offer_id=offer.id)
+    
+    return redirect('offer_detail', offer_id=offer.id)
+
 # Offer Detail View
 def offer_detail(request, offer_id, referral_id=None):
     offer = get_object_or_404(Offer, id=offer_id)
@@ -135,6 +167,8 @@ def offer_detail(request, offer_id, referral_id=None):
     email_not_verified = False
     contact_info_submitted = False
     google_form_completed = False
+    proof_submitted = False
+    proof_status = None
     email_verified = False
     mobile_verified = False
     tutorial_videos = TutorialVideo.objects.filter(offer=offer)
@@ -169,7 +203,9 @@ def offer_detail(request, offer_id, referral_id=None):
                 logger.info(f"Non-unique click ignored: referral_id={referral_id}, client_ip={ip_address}")
 
             offer_referral = referral
-            referral_url = request.build_absolute_uri(f"/r/{referral.id}/")
+            referral_url = request.build_absolute_uri(
+                reverse('offer_detail_with_referral', kwargs={'offer_id': offer.id, 'referral_id': referral.id})
+            )
             messages.info(request, f"You were referred by {referral.user.username if referral.user else 'an anonymous user'}.")
         except Referral.DoesNotExist:
             messages.error(request, "Invalid referral link.")
@@ -182,7 +218,9 @@ def offer_detail(request, offer_id, referral_id=None):
             # Get or create referral if no referral_id is provided
             if not referral_id:
                 offer_referral, created = Referral.objects.get_or_create(user=request.user, offer=offer)
-                referral_url = request.build_absolute_uri(f"/r/{offer_referral.id}/")
+                referral_url = request.build_absolute_uri(
+                    reverse('offer_detail_with_referral', kwargs={'offer_id': offer.id, 'referral_id': offer_referral.id})
+                )
                 if created:
                     referral_message = "Referral created successfully! Share your referral link to earn rewards."
 
@@ -196,6 +234,12 @@ def offer_detail(request, offer_id, referral_id=None):
         # Check if Google Form is completed
         google_form_completed = GoogleFormSubmission.objects.filter(user=request.user, offer=offer).exists()
 
+        # Check if conversion proof is submitted
+        proof_submitted = ConversionProof.objects.filter(user=request.user, offer=offer).exists()
+        if proof_submitted:
+            latest_proof = ConversionProof.objects.filter(user=request.user, offer=offer).latest('submitted_at')
+            proof_status = latest_proof.status
+
         # Profile info for user section
         profile_info = {
             'username': request.user.username,
@@ -203,6 +247,12 @@ def offer_detail(request, offer_id, referral_id=None):
             'joined': request.user.date_joined,
         }
         profile_level = request.user.userprofile.profile_level
+
+    else:
+        if not request.session.session_key:
+            request.session.create()
+        visitor_id = request.session.session_key
+        google_form_completed = GoogleFormSubmission.objects.filter(visitor_identifier=visitor_id, offer=offer).exists()
 
     # Generate CAPTCHA if required
     if offer.requires_contact_info and not contact_info_submitted:
@@ -229,6 +279,8 @@ def offer_detail(request, offer_id, referral_id=None):
                         'email_not_verified': email_not_verified,
                         'contact_info_submitted': contact_info_submitted,
                         'google_form_completed': google_form_completed,
+                        'proof_submitted': proof_submitted,
+                        'proof_status': proof_status,
                         'email_verified': email_verified,
                         'mobile_verified': mobile_verified,
                         'tutorial_videos': tutorial_videos,
@@ -273,6 +325,8 @@ def offer_detail(request, offer_id, referral_id=None):
         'email_not_verified': email_not_verified,
         'contact_info_submitted': contact_info_submitted,
         'google_form_completed': google_form_completed,
+        'proof_submitted': proof_submitted,
+        'proof_status': proof_status,
         'email_verified': email_verified,
         'mobile_verified': mobile_verified,
         'tutorial_videos': tutorial_videos,
@@ -665,6 +719,84 @@ def resend_verification_email(request):
             messages.error(request, "Failed to send verification email. Please try again later.")
     return redirect('dashboard')
 
+def send_verification_email(request):
+    if request.method == "POST":
+        email = request.POST.get("email")
+        if not email:
+            return JsonResponse({"status": "error", "message": "Email is required."}, status=400)
+
+        # Generate a random 6-digit code
+        verification_code = ''.join(random.choices(string.digits, k=6))
+
+        # Initialize the verification_codes dictionary in the session if it doesn't exist
+        if 'verification_codes' not in request.session:
+            request.session['verification_codes'] = {}
+
+        # Store the code in the session, keyed by email
+        request.session['verification_codes'][email] = {
+            'code': verification_code,
+            'timestamp': int(time.time()),  # Store the timestamp for expiration
+        }
+        request.session.modified = True  # Ensure the session is saved
+
+        try:
+            # Send the email
+            send_mail(
+                subject="Email Verification Code",
+                message=f"Your verification code is: {verification_code}",
+                from_email="noreply@yourdomain.com",
+                recipient_list=[email],
+                fail_silently=False,
+            )
+            return JsonResponse({"status": "success", "message": "Verification code sent to your email."})
+        except Exception as e:
+            return JsonResponse({"status": "error", "message": f"Failed to send email: {str(e)}"}, status=500)
+    return JsonResponse({"status": "error", "message": "Invalid request."}, status=400)
+
+def verify_email_code(request):
+    if request.method == "POST":
+        code = request.POST.get("code")
+        email = request.POST.get("email")  # Now pass the email from the frontend
+
+        if not email or not code:
+            return JsonResponse({"status": "error", "message": "Email and code are required."}, status=400)
+
+        # Retrieve the verification codes dictionary from the session
+        verification_codes = request.session.get('verification_codes', {})
+        stored_data = verification_codes.get(email)
+
+        if not stored_data:
+            return JsonResponse({"status": "error", "message": "No verification code found for this email."}, status=400)
+
+        stored_code = stored_data['code']
+        timestamp = stored_data['timestamp']
+        current_time = int(time.time())
+
+        # Check if the code has expired (e.g., 10 minutes = 600 seconds)
+        if current_time - timestamp > 600:
+            del verification_codes[email]
+            request.session['verification_codes'] = verification_codes
+            request.session.modified = True
+            return JsonResponse({"status": "error", "message": "Verification code has expired."}, status=400)
+
+        if code == stored_code:
+            try:
+                # Mark email as verified
+                user = User.objects.get(email=email)
+                user.userprofile.email_verified = True
+                user.userprofile.save()
+
+                # Remove the code from the session
+                del verification_codes[email]
+                request.session['verification_codes'] = verification_codes
+                request.session.modified = True
+
+                return JsonResponse({"status": "success", "message": "Email verified successfully!"})
+            except User.DoesNotExist:
+                return JsonResponse({"status": "error", "message": "User with this email does not exist."}, status=400)
+        return JsonResponse({"status": "error", "message": "Invalid verification code."}, status=400)
+    return JsonResponse({"status": "error", "message": "Invalid request."}, status=400)
+
 class CustomEmailView(EmailView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
@@ -703,8 +835,6 @@ def retry_mobile_verification(request):
         is_valid, message = validate_mobile_number(user, pending.mobile_number)
         if is_valid:
             user.userprofile.mobile_verified = True
-            # Since mobile_number doesn't exist in UserProfile, we'll skip setting it
-            # user.userprofile.mobile_number = pending.mobile_number
             user.userprofile.save()
             pending.is_processed = True
             pending.save()
